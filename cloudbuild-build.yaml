@@ -35,3 +35,5 @@ images:
 timeout: '1200s'
 options:
   logging: CLOUD_LOGGING_ONLY
+
+serviceAccount: 'projects/skyuk-uk-corpops-vfy-dev/serviceAccounts/corpops-vfy-dataload-vm@skyuk-uk-corpops-vfy-dev.iam.gserviceaccount.com'
