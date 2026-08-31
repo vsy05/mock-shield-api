@@ -197,7 +197,417 @@ IDENTIFIED_RISK_DATA = [
     },
 ]
 
-TOTAL_COUNT = 20621  # mimics real prod totalCount seen during testing
+IDENTIFIED_RISK_TOTAL_COUNT = 20621  # mimics real prod totalCount seen during testing
+
+
+# ------------------------------------------------------------------
+# Sample data - rebuilt from the REAL field structure of an
+# incidentReporting/incidents record (confirmed against an actual
+# prod sample), with entirely fictional values. All names, emails,
+# addresses, and reference numbers below are fictional. Field names
+# are preserved exactly, including the many relationship fields with
+# null data (these mirror real optional/unused fields on the record).
+# ------------------------------------------------------------------
+INCIDENTS_DATA = [
+    {
+        "id": "50001",
+        "type": "incidents",
+        "attributes": {
+            "dateAndTimeIncidentReported": "2026-02-10T09:15:00",
+            "otherReportingPersonType": None,
+            "nameOfPersonCompletingThisForm": "Sample Tester One",
+            "emailAddress": "sample.tester.one@example-corp.test",
+            "phoneNumber": None,
+            "dateAndTimeOfIncident": "2026-02-10T08:00:00",
+            "otherIncidentLocation": None,
+            "exactLocation": "1 Test Avenue, Sampleton, TS1 1AA",
+            "incidentDescriptionPleaseDescribeInDetail": "Sample fictional incident: a test employee reported a minor equipment issue during a routine site visit.",
+            "otherImmediateCause": None,
+            "tickIfYouWishToRemainAnonymous": None,
+            "firstDayOfLostTime": None,
+            "lastDayOfLostTime": None,
+            "otherPurposeOfTravelVehicleUsed": None,
+            "registrationNumberOfVehicleInvolved": None,
+            "yourVehicleDamageDetails": None,
+            "registrationNumberOfThirdPartyVehicle": None,
+            "thirdPartyVehicleDamageDetails": None,
+            "otherTypeOfDamage": None,
+            "howLongDidItTakeForTheBuilding": None,
+            "generalFeedbackOnPepPlans": None,
+            "generalCommentsOnEvacuation": None,
+            "incidentStatus": {"text": "Closed", "colour": "#00FF00"},
+            "lastUpdatedOn": "2026-02-14T11:20:00",
+            "lastUpdatedBy": "Sample Reviewer One",
+            "incidentRefNoPrefix": "TST - 001",
+            "severityOfIncident": {"text": "P3", "colour": "#FFFF00"},
+            "calculatedDaysOff": None,
+            "whereAppropriatePleaseEnterFurtherDetails": "T0001",
+            "departmentNotListed": None,
+            "otherRetailType": None,
+            "conditionalLogic": None,
+            "germanWorkRelatedIllHealthConditionalLogic": None,
+            "conditionalLogicSupportingDocuments": None,
+            "conditionalLogicInjuredPerson": None,
+            "reportedByGric": None,
+            "reportedByHomeServiceHelpdesk": None
+        },
+        "relationships": {
+            "pleaseSelectWhichDescriptionOfTheIncident": {"data": None},
+            "pleaseSelectTheMostAppropriateDescription": {"data": None},
+            "reportingPersonType": {
+                "data": {"type": "luReportingPersonType", "id": "1", "meta": {"displayValue": "Employee"}},
+                "links": {"related": "/api/v0/incidentReporting/luReportingPersonType/1"}
+            },
+            "incidentLocation": {
+                "data": {"type": "luIncidentLocation", "id": "1", "meta": {"displayValue": "Field Service"}},
+                "links": {"related": "/api/v0/incidentReporting/luIncidentLocation/1"}
+            },
+            "incidentSubLocation": {
+                "data": {"type": "luIncidentSubLocation", "id": "3", "meta": {"displayValue": "Domestic Property"}},
+                "links": {"related": "/api/v0/incidentReporting/luIncidentSubLocation/3"}
+            },
+            "locationType": {
+                "data": {"type": "luLocationDetail", "id": "3", "meta": {"displayValue": "Inside the property"}},
+                "links": {"related": "/api/v0/incidentReporting/luLocationDetail/3"}
+            },
+            "immediateCause": {
+                "data": {"type": "luImmediateCause", "id": "9", "meta": {"displayValue": "Property Damage - Customer Property"}},
+                "links": {"related": "/api/v0/incidentReporting/luImmediateCause/9"}
+            },
+            "didTheIncidentOccurWhilstCommutingToOrFrom": {"data": None},
+            "didTheEmergencyServicesAttendThisIncident": {
+                "data": {"type": "luYesNo", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/2"}
+            },
+            "employeeNameOfIllHealthPerson": {"data": None},
+            "pleaseSelectTheNatureOfTheWorkRelatedIll": {"data": None},
+            "hasTheConditionBeenDiagnosedByADrOr": {"data": None},
+            "pleaseSelectTheTypeOfIncident": {"data": None},
+            "wasAnAmbulanceCalled": {"data": None},
+            "wasThisPersonPlacedOnRestrictedOrLight": {"data": None},
+            "whatWasThePurposeOfYourTravelVehicleBeing": {"data": None},
+            "wereThereAnyInjuredPersonsIps": {"data": None},
+            "ipsTakenByAmbulance": {"data": None},
+            "wasYourVehicleDamaged": {"data": None},
+            "wasAThirdPartyVehicleInvolved": {"data": None},
+            "wasTheThirdPartyVehicleDamaged": {"data": None},
+            "typeOfDamage": {
+                "data": {"type": "luTypeOfDamage", "id": "2", "meta": {"displayValue": "Services Damage (water, electricity, gas)"}},
+                "links": {"related": "/api/v0/incidentReporting/luTypeOfDamage/2"}
+            },
+            "didTheBuildingEvacuate": {"data": None},
+            "wereThereAnyPersonsWithPepPlansInTheBuild": {"data": None},
+            "incidentType": {
+                "data": {"type": "luIncidentTypeAndDescription", "id": "47", "meta": {"displayValue": "Damage to property arising from work activities"}},
+                "links": {"related": "/api/v0/incidentReporting/luIncidentTypeAndDescription/47"}
+            },
+            "whatWasThePotentialSeverityOfTheIssue": {"data": None},
+            "thisALostTimeInjury": {"data": None},
+            "retailType": {"data": None},
+            "italyIncidentCategory": {"data": None},
+            "inailRejected": {"data": None},
+            "nonCriticalHitType": {"data": None},
+            "luImmediateCause": {"links": {"related": "/api/v0/incidentReporting/incidents/50001/luImmediateCause"}},
+            "luWeatherConditions": {"links": {"related": "/api/v0/incidentReporting/incidents/50001/luWeatherConditions"}},
+            "luEmergencyServices": {"links": {"related": "/api/v0/incidentReporting/incidents/50001/luEmergencyServices"}},
+            "employees": {"links": {"related": "/api/v0/incidentReporting/incidents/50001/employees"}},
+            "sys_calculations": {"links": {"related": "/api/v0/incidentReporting/incidents/50001/sys_calculations"}}
+        },
+        "links": {"self": "/api/v0/incidentReporting/incidents/50001"}
+    },
+    {
+        "id": "50002",
+        "type": "incidents",
+        "attributes": {
+            "dateAndTimeIncidentReported": "2026-03-05T14:22:00",
+            "otherReportingPersonType": None,
+            "nameOfPersonCompletingThisForm": "Sample Tester Two",
+            "emailAddress": "sample.tester.two@example-corp.test",
+            "phoneNumber": None,
+            "dateAndTimeOfIncident": "2026-03-05T11:00:00",
+            "otherIncidentLocation": None,
+            "exactLocation": "2 Test Boulevard, Sampleton, TS2 2BB",
+            "incidentDescriptionPleaseDescribeInDetail": "Sample fictional incident: a test field engineer temporarily left equipment unattended near a walkway before promptly relocating it to a safe position after being reminded of procedure.",
+            "otherImmediateCause": None,
+            "tickIfYouWishToRemainAnonymous": None,
+            "firstDayOfLostTime": None,
+            "lastDayOfLostTime": None,
+            "otherPurposeOfTravelVehicleUsed": None,
+            "registrationNumberOfVehicleInvolved": None,
+            "yourVehicleDamageDetails": None,
+            "registrationNumberOfThirdPartyVehicle": None,
+            "thirdPartyVehicleDamageDetails": None,
+            "otherTypeOfDamage": None,
+            "howLongDidItTakeForTheBuilding": None,
+            "generalFeedbackOnPepPlans": None,
+            "generalCommentsOnEvacuation": None,
+            "incidentStatus": {"text": "Closed", "colour": "#00FF00"},
+            "lastUpdatedOn": "2026-03-09T10:05:00",
+            "lastUpdatedBy": "Sample Reviewer Two",
+            "incidentRefNoPrefix": "TST - 002",
+            "severityOfIncident": {"text": "P3", "colour": "#FFFF00"},
+            "calculatedDaysOff": None,
+            "whereAppropriatePleaseEnterFurtherDetails": "T0002",
+            "departmentNotListed": None,
+            "otherRetailType": None,
+            "conditionalLogic": None,
+            "germanWorkRelatedIllHealthConditionalLogic": None,
+            "conditionalLogicSupportingDocuments": None,
+            "conditionalLogicInjuredPerson": None,
+            "reportedByGric": None,
+            "reportedByHomeServiceHelpdesk": None
+        },
+        "relationships": {
+            "pleaseSelectWhichDescriptionOfTheIncident": {"data": None},
+            "pleaseSelectTheMostAppropriateDescription": {"data": None},
+            "reportingPersonType": {
+                "data": {"type": "luReportingPersonType", "id": "1", "meta": {"displayValue": "Employee"}},
+                "links": {"related": "/api/v0/incidentReporting/luReportingPersonType/1"}
+            },
+            "incidentLocation": {
+                "data": {"type": "luIncidentLocation", "id": "1", "meta": {"displayValue": "Field Service"}},
+                "links": {"related": "/api/v0/incidentReporting/luIncidentLocation/1"}
+            },
+            "incidentSubLocation": {
+                "data": {"type": "luIncidentSubLocation", "id": "3", "meta": {"displayValue": "Domestic Property"}},
+                "links": {"related": "/api/v0/incidentReporting/luIncidentSubLocation/3"}
+            },
+            "locationType": {
+                "data": {"type": "luLocationDetail", "id": "4", "meta": {"displayValue": "Outside the property"}},
+                "links": {"related": "/api/v0/incidentReporting/luLocationDetail/4"}
+            },
+            "immediateCause": {"data": None},
+            "didTheIncidentOccurWhilstCommutingToOrFrom": {"data": None},
+            "didTheEmergencyServicesAttendThisIncident": {
+                "data": {"type": "luYesNo", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/2"}
+            },
+            "employeeNameOfIllHealthPerson": {"data": None},
+            "pleaseSelectTheNatureOfTheWorkRelatedIll": {"data": None},
+            "hasTheConditionBeenDiagnosedByADrOr": {"data": None},
+            "pleaseSelectTheTypeOfIncident": {"data": None},
+            "wasAnAmbulanceCalled": {"data": None},
+            "wasThisPersonPlacedOnRestrictedOrLight": {"data": None},
+            "whatWasThePurposeOfYourTravelVehicleBeing": {"data": None},
+            "wereThereAnyInjuredPersonsIps": {"data": None},
+            "ipsTakenByAmbulance": {"data": None},
+            "wasYourVehicleDamaged": {"data": None},
+            "wasAThirdPartyVehicleInvolved": {"data": None},
+            "wasTheThirdPartyVehicleDamaged": {"data": None},
+            "typeOfDamage": {"data": None},
+            "didTheBuildingEvacuate": {"data": None},
+            "wereThereAnyPersonsWithPepPlansInTheBuild": {"data": None},
+            "incidentType": {
+                "data": {"type": "luIncidentTypeAndDescription", "id": "48", "meta": {"displayValue": "An event that did not cause harm but had the potential to cause injury or ill health"}},
+                "links": {"related": "/api/v0/incidentReporting/luIncidentTypeAndDescription/48"}
+            },
+            "whatWasThePotentialSeverityOfTheIssue": {
+                "data": {"type": "luNearMissSeverity", "id": "3", "meta": {"displayValue": "An incident which did not, but which could have caused harm/damage to an individual or property"}},
+                "links": {"related": "/api/v0/incidentReporting/luNearMissSeverity/3"}
+            },
+            "thisALostTimeInjury": {"data": None},
+            "retailType": {"data": None},
+            "italyIncidentCategory": {"data": None},
+            "inailRejected": {"data": None},
+            "nonCriticalHitType": {"data": None},
+            "luImmediateCause": {"links": {"related": "/api/v0/incidentReporting/incidents/50002/luImmediateCause"}},
+            "luWeatherConditions": {"links": {"related": "/api/v0/incidentReporting/incidents/50002/luWeatherConditions"}},
+            "luEmergencyServices": {"links": {"related": "/api/v0/incidentReporting/incidents/50002/luEmergencyServices"}},
+            "employees": {"links": {"related": "/api/v0/incidentReporting/incidents/50002/employees"}},
+            "sys_calculations": {"links": {"related": "/api/v0/incidentReporting/incidents/50002/sys_calculations"}}
+        },
+        "links": {"self": "/api/v0/incidentReporting/incidents/50002"}
+    },
+]
+
+INCIDENTS_TOTAL_COUNT = 6321  # fictional total, deliberately different from real prod count
+
+
+# ------------------------------------------------------------------
+# Sample data - rebuilt from the REAL field structure of a
+# riskAssessments/riskAssessment record (confirmed against an actual
+# prod sample), with entirely fictional values. All company/brand
+# references, employee names, and assessment content below are
+# fictional. Field names preserved exactly.
+# ------------------------------------------------------------------
+RISK_ASSESSMENT_DATA = [
+    {
+        "id": "80001",
+        "type": "riskAssessment",
+        "attributes": {
+            "riskAssessmentRefNo": 9101,
+            "dateCreated": "2026-01-10T00:00:00",
+            "otherRiskAssessmentCategory": None,
+            "assessmentTitle": "Sample Fictional Assessment - Field Operations Category A, Test Period 2026",
+            "assessmentOutlineDescriptionOfActivitiesUnder": "Sample fictional description: this assessment covers a generic set of field operations activities for testing purposes, including standard travel, on-site work, and routine coordination between test teams. No real operational content is contained here - all details are placeholder text for pipeline validation.",
+            "assessmentStartDate": "2026-01-10T00:00:00",
+            "approximateAssessmentEndDate": None,
+            "planForTrip": None,
+            "commsPlan": None,
+            "accommodation": None,
+            "emergencyPlan": None,
+            "otherPeopleAtRisk": None,
+            "onSiteLocation": None,
+            "offSiteProvideDetail": "Sample fictional deployments with a generic test rating.",
+            "status": {"text": "Archived", "colour": "#808080"},
+            "lastUpdatedOn": "2026-01-20T09:00:00",
+            "lastUpdatedBy": "Sample Assessor One",
+            "travellerMlreConditionalLogic": None,
+            "additionalInformation": False,
+            "assessmentOutlinedescriptionOfActivitiesCont": None,
+            "peopleAtRiskDetails": None,
+            "supportingEvidenceMlreConditionalLogic": None,
+            "tickWhenReadyForApproval": False,
+            "acknowledgmentRequired": None,
+            "numberOfAcknowledgementsRemaining": 0,
+            "tickToCloseDownAssessment": None,
+            "teamHaveDepartedFromTheCountryOfDeployment": None,
+            "trackingClosedDown": None,
+            "ppeReturnedAndCheckedInOnCheqroom": None,
+            "nokRemovedFromTheDatabase": None,
+            "comms": None,
+            "equipment": None,
+            "training": None,
+            "other": None,
+            "teamFeedback": None,
+            "secondaryHighRiskAssessmentApproval": None
+        },
+        "relationships": {
+            "riskAssessmentCategory": {
+                "data": {"type": "luRiskAssessmentCategory", "id": "3", "meta": {"displayValue": "Category A"}},
+                "links": {"related": "/api/v0/riskAssessments/luRiskAssessmentCategory/3"}
+            },
+            "uploadAttachment": {"data": None},
+            "isThisAnAdHocOrOnGoingRiskAssessment": {
+                "data": {"type": "luAdHocOnGoing", "id": "2", "meta": {"displayValue": "Long Term"}},
+                "links": {"related": "/api/v0/riskAssessments/luAdHocOnGoing/2"}
+            },
+            "emergencyPlanAttachment": {"data": None},
+            "updates": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/sys_discussionForumPosts/updates"}},
+            "feedback": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/sys_discussionForumPosts/feedback"}},
+            "uploadAttachment2": {"data": None},
+            "uploadAttachment3": {"data": None},
+            "primaryAssessor": {
+                "data": {"type": "employees", "id": "99001", "meta": {"displayValue": "Sample Assessor One"}},
+                "links": {"related": "/api/v0/riskAssessments/employees/99001"}
+            },
+            "jobProfile": {"data": None},
+            "nextReviewmonths": {
+                "data": {"type": "luFrequencyOfReview", "id": "12", "meta": {"displayValue": 12}},
+                "links": {"related": "/api/v0/riskAssessments/luFrequencyOfReview/12"}
+            },
+            "market": {
+                "data": {"type": "luMarket", "id": "1", "meta": {"displayValue": "Test Region"}},
+                "links": {"related": "/api/v0/riskAssessments/luMarket/1"}
+            },
+            "marketAreaResponsible": {
+                "data": {"type": "luMarket", "id": "1", "meta": {"displayValue": "Test Region"}},
+                "links": {"related": "/api/v0/riskAssessments/luMarket/1"}
+            },
+            "luPeopleAtRisk": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luPeopleAtRisk"}},
+            "mtmGenericAssessment": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/mtmGenericAssessment"}},
+            "employees": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/employees"}},
+            "luFreelancers": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luFreelancers"}},
+            "luDirectorate": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luDirectorate"}},
+            "luLocationOfRisks": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luLocationOfRisks"}},
+            "luOnSiteBuilding": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luOnSiteBuilding"}},
+            "luHighRiskType": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luHighRiskType"}},
+            "luLocationsRa": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luLocationsRa"}},
+            "luLessonsIdentified": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/luLessonsIdentified"}},
+            "sys_calculations": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80001/sys_calculations"}}
+        },
+        "links": {"self": "/api/v0/riskAssessments/riskAssessment/80001"}
+    },
+    {
+        "id": "80002",
+        "type": "riskAssessment",
+        "attributes": {
+            "riskAssessmentRefNo": 9102,
+            "dateCreated": "2026-01-18T00:00:00",
+            "otherRiskAssessmentCategory": None,
+            "assessmentTitle": "Sample Fictional Assessment - Standard Operations Generic Assessment",
+            "assessmentOutlineDescriptionOfActivitiesUnder": "Sample fictional description: this generic assessment covers standard, low-risk test activities. DISTRIBUTION: for use by fictional test teams only. USE: for standard, low-risk sample assignments. EXCEPTIONS: outside these definitions a bespoke assessment must be considered. All content here is placeholder text for pipeline validation purposes only.",
+            "assessmentStartDate": "2026-01-18T00:00:00",
+            "approximateAssessmentEndDate": None,
+            "planForTrip": None,
+            "commsPlan": None,
+            "accommodation": None,
+            "emergencyPlan": None,
+            "otherPeopleAtRisk": None,
+            "onSiteLocation": None,
+            "offSiteProvideDetail": "Sample fictional coverage across generic test locations.",
+            "status": {"text": "Archived", "colour": "#808080"},
+            "lastUpdatedOn": "2026-02-01T10:00:00",
+            "lastUpdatedBy": "Sample Assessor Two",
+            "travellerMlreConditionalLogic": None,
+            "additionalInformation": False,
+            "assessmentOutlinedescriptionOfActivitiesCont": None,
+            "peopleAtRiskDetails": None,
+            "supportingEvidenceMlreConditionalLogic": None,
+            "tickWhenReadyForApproval": True,
+            "acknowledgmentRequired": False,
+            "numberOfAcknowledgementsRemaining": 0,
+            "tickToCloseDownAssessment": None,
+            "teamHaveDepartedFromTheCountryOfDeployment": None,
+            "trackingClosedDown": None,
+            "ppeReturnedAndCheckedInOnCheqroom": None,
+            "nokRemovedFromTheDatabase": None,
+            "comms": None,
+            "equipment": None,
+            "training": None,
+            "other": None,
+            "teamFeedback": None,
+            "secondaryHighRiskAssessmentApproval": None
+        },
+        "relationships": {
+            "riskAssessmentCategory": {
+                "data": {"type": "luRiskAssessmentCategory", "id": "1", "meta": {"displayValue": "Category B"}},
+                "links": {"related": "/api/v0/riskAssessments/luRiskAssessmentCategory/1"}
+            },
+            "uploadAttachment": {"data": None},
+            "isThisAnAdHocOrOnGoingRiskAssessment": {
+                "data": {"type": "luAdHocOnGoing", "id": "2", "meta": {"displayValue": "Long Term"}},
+                "links": {"related": "/api/v0/riskAssessments/luAdHocOnGoing/2"}
+            },
+            "emergencyPlanAttachment": {"data": None},
+            "updates": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/sys_discussionForumPosts/updates"}},
+            "feedback": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/sys_discussionForumPosts/feedback"}},
+            "uploadAttachment2": {"data": None},
+            "uploadAttachment3": {"data": None},
+            "primaryAssessor": {
+                "data": {"type": "employees", "id": "99002", "meta": {"displayValue": "Sample Assessor Two"}},
+                "links": {"related": "/api/v0/riskAssessments/employees/99002"}
+            },
+            "jobProfile": {"data": None},
+            "nextReviewmonths": {
+                "data": {"type": "luFrequencyOfReview", "id": "12", "meta": {"displayValue": 12}},
+                "links": {"related": "/api/v0/riskAssessments/luFrequencyOfReview/12"}
+            },
+            "market": {
+                "data": {"type": "luMarket", "id": "1", "meta": {"displayValue": "Test Region"}},
+                "links": {"related": "/api/v0/riskAssessments/luMarket/1"}
+            },
+            "marketAreaResponsible": {
+                "data": {"type": "luMarket", "id": "1", "meta": {"displayValue": "Test Region"}},
+                "links": {"related": "/api/v0/riskAssessments/luMarket/1"}
+            },
+            "luPeopleAtRisk": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luPeopleAtRisk"}},
+            "mtmGenericAssessment": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/mtmGenericAssessment"}},
+            "employees": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/employees"}},
+            "luFreelancers": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luFreelancers"}},
+            "luDirectorate": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luDirectorate"}},
+            "luLocationOfRisks": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luLocationOfRisks"}},
+            "luOnSiteBuilding": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luOnSiteBuilding"}},
+            "luHighRiskType": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luHighRiskType"}},
+            "luLocationsRa": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luLocationsRa"}},
+            "luLessonsIdentified": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/luLessonsIdentified"}},
+            "sys_calculations": {"links": {"related": "/api/v0/riskAssessments/riskAssessment/80002/sys_calculations"}}
+        },
+        "links": {"self": "/api/v0/riskAssessments/riskAssessment/80002"}
+    },
+]
+
+RISK_ASSESSMENT_TOTAL_COUNT = 1777  # fictional total, deliberately different from real prod count
 
 
 @app.route('/health', methods=['GET'])
@@ -257,14 +667,102 @@ def get_identified_risk():
     records = (IDENTIFIED_RISK_DATA * 2)[start:start + limit]
 
     next_offset = offset + limit
-    last_offset = TOTAL_COUNT - limit
+    last_offset = IDENTIFIED_RISK_TOTAL_COUNT - limit
 
     response_body = {
         "data": records,
-        "meta": {"totalCount": TOTAL_COUNT},
+        "meta": {"totalCount": IDENTIFIED_RISK_TOTAL_COUNT},
         "links": {
             "next": f"/api/v0/riskAssessments/identifiedRisk?page%5Blimit%5D={limit}&page%5Boffset%5D={next_offset}",
             "last": f"/api/v0/riskAssessments/identifiedRisk?page%5Blimit%5D={limit}&page%5Boffset%5D={last_offset}",
+        },
+    }
+
+    return jsonify(response_body), 200, get_standard_headers()
+
+
+@app.route('/api/v0/incidentReporting/incidents', methods=['GET'])
+def get_incidents():
+    """
+    Mock endpoint mimicking InfoExchange (Shield) JSON:API dynamic endpoint
+    for the incidentReporting/incidents table.
+
+    Query parameters supported:
+        page[limit]  - max records to return (default 3, capped at sample size)
+        page[offset] - offset into the sample set (wraps if beyond sample size)
+    """
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({
+            "errors": [{"detail": "Missing or invalid Authorization header"}]
+        }), 401, get_standard_headers()
+
+    try:
+        limit = int(request.args.get('page[limit]', 3))
+    except (TypeError, ValueError):
+        limit = 3
+
+    try:
+        offset = int(request.args.get('page[offset]', 0))
+    except (TypeError, ValueError):
+        offset = 0
+
+    start = offset % len(INCIDENTS_DATA)
+    records = (INCIDENTS_DATA * 2)[start:start + limit]
+
+    next_offset = offset + limit
+    last_offset = INCIDENTS_TOTAL_COUNT - limit
+
+    response_body = {
+        "data": records,
+        "meta": {"totalCount": INCIDENTS_TOTAL_COUNT},
+        "links": {
+            "next": f"/api/v0/incidentReporting/incidents?page%5Blimit%5D={limit}&page%5Boffset%5D={next_offset}",
+            "last": f"/api/v0/incidentReporting/incidents?page%5Blimit%5D={limit}&page%5Boffset%5D={last_offset}",
+        },
+    }
+
+    return jsonify(response_body), 200, get_standard_headers()
+
+
+@app.route('/api/v0/riskAssessments/riskAssessment', methods=['GET'])
+def get_risk_assessment():
+    """
+    Mock endpoint mimicking InfoExchange (Shield) JSON:API dynamic endpoint
+    for the riskAssessments/riskAssessment table.
+
+    Query parameters supported:
+        page[limit]  - max records to return (default 3, capped at sample size)
+        page[offset] - offset into the sample set (wraps if beyond sample size)
+    """
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({
+            "errors": [{"detail": "Missing or invalid Authorization header"}]
+        }), 401, get_standard_headers()
+
+    try:
+        limit = int(request.args.get('page[limit]', 3))
+    except (TypeError, ValueError):
+        limit = 3
+
+    try:
+        offset = int(request.args.get('page[offset]', 0))
+    except (TypeError, ValueError):
+        offset = 0
+
+    start = offset % len(RISK_ASSESSMENT_DATA)
+    records = (RISK_ASSESSMENT_DATA * 2)[start:start + limit]
+
+    next_offset = offset + limit
+    last_offset = RISK_ASSESSMENT_TOTAL_COUNT - limit
+
+    response_body = {
+        "data": records,
+        "meta": {"totalCount": RISK_ASSESSMENT_TOTAL_COUNT},
+        "links": {
+            "next": f"/api/v0/riskAssessments/riskAssessment?page%5Blimit%5D={limit}&page%5Boffset%5D={next_offset}",
+            "last": f"/api/v0/riskAssessments/riskAssessment?page%5Blimit%5D={limit}&page%5Boffset%5D={last_offset}",
         },
     }
 
