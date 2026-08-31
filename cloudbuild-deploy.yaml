@@ -39,13 +39,9 @@ substitutions:
 
 options:
   dynamicSubstitutions: true
-  logging: CLOUD_LOGGING_ONLY
+  logging: GCS_ONLY
 
 serviceAccount: 'projects/skyuk-uk-corpops-vfy-dev/serviceAccounts/corpops-deploy-build@skyuk-uk-corpops-vfy-dev.iam.gserviceaccount.com'
-
-options:
-  dynamicSubstitutions: true
-  logging: CLOUD_LOGGING_ONLY
 
 # NOTE: --allow-unauthenticated makes this mock reachable without an
 # identity token, which is fine for a throwaway dev test double, but
