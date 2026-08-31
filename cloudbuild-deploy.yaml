@@ -1,0 +1,47 @@
+# Cloud Build configuration for Mock Shield (InfoExchange) API - Deploy to Cloud Run
+steps:
+
+  # create uuid for revision suffix
+  - id: gen_uuid
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - date '+%d%m%y%H%M%S'> uid.txt
+
+  # deploy to Cloud Run
+  - id: deploy_mock_shield_api
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - >
+        gcloud run deploy ${_SERV_NAME}
+        --image ${_REGION}-docker.pkg.dev/${_REPO_PROJ}-${_REPO_ENV}/${_REPO_NAME}/mock-shield-api:${_TAG}
+        --region ${_REGION} --service-account ${_SA_ACCOUNT}
+        --revision-suffix $(cat uid.txt)
+        --memory ${_SERV_MEM} --cpu ${_SERV_CPU} --timeout=${_SERV_TIMEOUT}
+        --allow-unauthenticated
+        --set-env-vars=PROJ_ID=${PROJECT_ID}
+
+substitutions:
+  _TAG: v1.0.0
+  _REGION: europe-west1
+  _REPO_NAME: dta-corpops-cloudrun
+  _REPO_PROJ: skyuk-uk-corpops-vfy
+  _REPO_ENV: dev
+  _SA_NAME: corpops-dataload-run
+  _SA_ACCOUNT: ${_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+  _SERV_NAME: mock-shield-api
+  _SERV_MEM: 512Mi
+  _SERV_CPU: "1"
+  _SERV_TIMEOUT: 60s
+
+options:
+  dynamicSubstitutions: true
+  logging: CLOUD_LOGGING_ONLY
+
+# NOTE: --allow-unauthenticated makes this mock reachable without an
+# identity token, which is fine for a throwaway dev test double, but
+# tighten this (remove the flag, require IAM invoker role) if the mock
+# will live long-term or handle anything sensitive.

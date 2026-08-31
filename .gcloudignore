@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.md
+!README.md
+.git
+.gitignore
+.dockerignore
+test_*.py
+*/test_*.py
+coverage*
+.coverage*

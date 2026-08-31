@@ -1,0 +1,13 @@
+.git
+.gitignore
+README.md
+*.md
+__pycache__/
+*.pyc
+.gcloudignore
+.dockerignore
+test_*.py
+*/test_*.py
+coverage*
+.coverage*
+settings*
