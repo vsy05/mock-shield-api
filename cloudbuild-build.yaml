@@ -19,10 +19,9 @@ steps:
     waitFor: ['build_container']
 
 # Substitution variables
-# NOTE: confirm _REPO_NAME and serviceAccount below match your corpops
-# Artifact Registry repo / build service account - these are carried over
-# from your existing Everbridge cloudbuild_app.yaml naming convention and
-# may need adjusting.
+# NOTE: confirm _REPO_NAME matches your corpops Artifact Registry repo -
+# this is carried over from your existing Everbridge cloudbuild_app.yaml
+# naming convention and may need adjusting.
 substitutions:
   _TAG: 'v1.0.0'
   _REGION: 'europe-west1'
@@ -36,5 +35,3 @@ images:
 timeout: '1200s'
 options:
   logging: CLOUD_LOGGING_ONLY
-
-serviceAccount: 'projects/skyuk-uk-corpops-vfy-dev/serviceAccounts/corpops-vfy-dataload-build@skyuk-uk-corpops-vfy-dev.iam.gserviceaccount.com'
