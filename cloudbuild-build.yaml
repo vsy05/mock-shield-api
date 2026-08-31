@@ -25,7 +25,7 @@ steps:
 substitutions:
   _TAG: 'v1.0.0'
   _REGION: 'europe-west1'
-  _REPO_NAME: 'dta-corpops-cloudrun'
+  _REPO_NAME: 'dta-corpops-vfy-cloudrun'
 
 # Push images to Artifact Registry
 images:
