@@ -39,7 +39,7 @@ substitutions:
 
 options:
   dynamicSubstitutions: true
-  logging: GCS_ONLY
+  logging: CLOUD_LOGGING_ONLY
 
 serviceAccount: 'projects/skyuk-uk-corpops-vfy-dev/serviceAccounts/corpops-deploy-build@skyuk-uk-corpops-vfy-dev.iam.gserviceaccount.com'
 
