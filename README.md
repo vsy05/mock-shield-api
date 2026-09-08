@@ -1,8 +1,8 @@
 # Mock Shield (InfoExchange) API
 
 Mimics the real InfoExchange (EcoOnline Shield) API for testing the
-`riskAssessments/identifiedRisk` extraction pipeline in dev, since EcoOnline
-does not provide a separate dev/sandbox tenant - only production exists.
+Shield extraction pipeline in dev, since EcoOnline does not provide a
+separate dev/sandbox tenant - only production exists.
 
 A small Flask app, deployed to Cloud Run via Cloud Build, serving canned
 JSON:API-shaped responses so the extraction pipeline's logic (auth flow,
@@ -11,11 +11,13 @@ repeatably without hitting the real prod API.
 
 ## Endpoints
 
-| Method | Path                                     | Purpose                                   |
-| ------ | ----------------------------------------- | ------------------------------------------ |
-| POST   | `/identity/connect/token`                 | Mock OAuth2 `client_credentials` token issuance (any client_id/secret accepted) |
-| GET    | `/api/v0/riskAssessments/identifiedRisk`  | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
-| GET    | `/health`                                 | Health check |
+| Method | Path                                       | Purpose                                   |
+| ------ | ------------------------------------------- | ------------------------------------------ |
+| POST   | `/identity/connect/token`                   | Mock OAuth2 `client_credentials` token issuance (any client_id/secret accepted) |
+| GET    | `/api/v0/riskAssessments/identifiedRisk`    | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
+| GET    | `/api/v0/incidentReporting/incidents`       | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
+| GET    | `/api/v0/riskAssessments/riskAssessment`    | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
+| GET    | `/health`                                   | Health check |
 
 ## Run locally
 
@@ -40,27 +42,40 @@ Confirm/adjust the substitution values in both `cloudbuild-build.yaml` and
 match your actual Artifact Registry repo and build/run service accounts
 before running.
 
-## Point the extraction script at the mock
+## Point the extraction scripts at the mock
 
-The `infoexchange_riskassessments_identifiedrisk_get.bash` script supports a
-`SHIELD_BASE_URL` override, so once this is deployed:
+Each endpoint has its own mock-only test script (no Secret Manager code
+path - `CLIENT_ID`/`CLIENT_SECRET` must be supplied as dummy environment
+values):
+
+- `shield_riskassessments_identifiedrisk_get_mocktest.bash`
+- `shield_incidentreporting_incidents_get_mocktest.bash`
+- `shield_riskassessments_riskassessment_get_mocktest.bash`
+
+Once this mock is deployed:
 
 ```bash
 export SHIELD_BASE_URL="https://<cloud-run-service-url>"
 export CLIENT_ID="anything"       # not validated by the mock
 export CLIENT_SECRET="anything"   # not validated by the mock
-bash infoexchange_riskassessments_identifiedrisk_get.bash
+export BUCKET_ENV=dev             # required - drives the GCS destination bucket
+
+bash shield_riskassessments_identifiedrisk_get_mocktest.bash
+bash shield_incidentreporting_incidents_get_mocktest.bash
+bash shield_riskassessments_riskassessment_get_mocktest.bash
 ```
 
 Since the Cloud Run URL is on `*.run.app`, it should already be reachable
 through your dev environment's proxy without needing a `no_proxy` exception
 (unlike `shield.info-exchange.com`, which required one).
 
-Unset `SHIELD_BASE_URL` to point the same script back at the real prod API.
+Each script refuses to run if `SHIELD_BASE_URL` points at a real
+`info-exchange.com` domain, so they can never accidentally hit real Shield
+credentials or data.
 
-## Next steps
+## Status
 
-Once this is validated for `identifiedRisk`, the same pattern (add a route
-in `main.py`, add sample data) can be extended to cover:
-- `riskAssessments/riskAssessment`
-- `incidentReporting/incidents`
+All 3 Shield endpoints used by the production pipeline are mocked here:
+`riskAssessments/identifiedRisk`, `incidentReporting/incidents`, and
+`riskAssessments/riskAssessment`. No further endpoints are currently
+planned.
