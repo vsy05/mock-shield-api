@@ -1,8 +1,8 @@
 """
 Mock InfoExchange (Shield) API for Development/Testing
 Mimics the real InfoExchange (EcoOnline Shield) API behavior for testing the
-riskAssessments/identifiedRisk extraction pipeline in dev, since EcoOnline
-does not provide a separate dev/sandbox tenant.
+Shield extraction pipeline in dev, since EcoOnline does not provide a
+separate dev/sandbox tenant.
 
 Endpoints mocked:
     POST /identity/connect/token
@@ -10,13 +10,24 @@ Endpoints mocked:
     GET  /api/v0/riskAssessments/identifiedRisk
         - JSON:API-shaped response with sample records
         - Supports page[limit] / page[offset] query params
+    GET  /api/v0/incidentReporting/incidents
+        - JSON:API-shaped response with sample records
+        - Supports page[limit] / page[offset] query params
+    GET  /api/v0/riskAssessments/riskAssessment
+        - JSON:API-shaped response with sample records
+        - Supports page[limit] / page[offset] query params
+    GET  /health
+        - Health check
 
 Usage (local):
     python3 main.py
     (listens on 0.0.0.0:8080)
 
 Usage (once deployed to Cloud Run):
-    SHIELD_BASE_URL=https://<cloud-run-url> bash infoexchange_riskassessments_identifiedrisk_get.bash
+    SHIELD_BASE_URL=https://<cloud-run-url> CLIENT_ID=anything CLIENT_SECRET=anything BUCKET_ENV=dev \
+    bash shield_riskassessments_identifiedrisk_get_mocktest.bash
+    (or shield_incidentreporting_incidents_get_mocktest.bash /
+     shield_riskassessments_riskassessment_get_mocktest.bash for the other 2 endpoints)
 """
 
 from flask import Flask, jsonify, request
