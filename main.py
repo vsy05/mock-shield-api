@@ -621,6 +621,144 @@ RISK_ASSESSMENT_DATA = [
 RISK_ASSESSMENT_TOTAL_COUNT = 1777  # fictional total, deliberately different from real prod count
 
 
+# ------------------------------------------------------------------
+# Sample data - rebuilt from the REAL field structure of an
+# incidentReporting/injuredPerson record (confirmed against an actual
+# prod sample), with entirely fictional values. All names, emails, and
+# reference numbers below are fictional. Field names preserved exactly,
+# including the array-valued relationships (bodyMap, luInjuriesSustained)
+# which carry their own meta.totalCount - a pattern not present on the
+# other 3 endpoints.
+# ------------------------------------------------------------------
+INJURED_PERSON_DATA = [
+    {
+        "id": "90001",
+        "type": "injuredPerson",
+        "attributes": {
+            "injuredPersonRefNo": 5501,
+            "dateCreated": "2026-01-06T00:00:00",
+            "injuredPersonName": "Sample Injured Person One",
+            "injuredPersonEmailAddress": "sample.injured.one@example-corp.test",
+            "injuredPersonJobTitle": None,
+            "injuredPersonPhoneNumber": None,
+            "employerContactDetails": None,
+            "shiftStartTime": "2000-01-01T08:00:00",
+            "treatmentDetails": None,
+            "whatWasTheNameOfTheHospital": None,
+            "firstDayOfLostTime": "2026-01-05T00:00:00",
+            "lastDayOfLostTime": "2026-01-07T00:00:00",
+            "lastUpdatedOn": "2026-01-06T16:33:08",
+            "lastUpdatedBy": "Sample Reviewer One",
+            "employerName": None,
+            "calculatedDaysOff": 2
+        },
+        "relationships": {
+            "typeOfPerson": {
+                "data": {"type": "luTypeOfPerson", "id": "1", "meta": {"displayValue": "Employee"}},
+                "links": {"related": "/api/v0/incidentReporting/luTypeOfPerson/1"}
+            },
+            "employeeName": {
+                "data": {"type": "employees", "id": "88801", "meta": {"displayValue": "Sample Injured Person One"}},
+                "links": {"related": "/api/v0/incidentReporting/employees/88801"}
+            },
+            "gender": {
+                "data": {"type": "luGender", "id": "1", "meta": {"displayValue": "Male"}},
+                "links": {"related": "/api/v0/incidentReporting/luGender/1"}
+            },
+            "whatTreatmentWasProvided": {
+                "data": {"type": "luTreatmentProvided", "id": "1", "meta": {"displayValue": "No Treatment"}},
+                "links": {"related": "/api/v0/incidentReporting/luTreatmentProvided/1"}
+            },
+            "wasThisPersonPlacedOnRestrictedOrLight": {"data": None},
+            "thisALostTimeInjury": {
+                "data": {"type": "luYesNoUnknown", "id": "1", "meta": {"displayValue": "Yes"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNoUnknown/1"}
+            },
+            "bodyMap": {
+                "data": [{"type": "sys_imageHotSpots", "id": "60001"}],
+                "links": {"related": "/api/v0/incidentReporting/injuredPerson/90001/sys_imageHotSpots/bodyMap"},
+                "meta": {"totalCount": 1}
+            },
+            "doesThisIncidentNeedReportingToTheHse": {
+                "data": {"type": "luYesNoUnknown", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNoUnknown/2"}
+            },
+            "luInjuriesSustained": {
+                "data": [{"type": "luInjuriesSustained", "id": "1", "meta": {"displayValue": "Strain/Sprain - Back"}}],
+                "links": {"related": "/api/v0/incidentReporting/injuredPerson/90001/luInjuriesSustained"},
+                "meta": {"totalCount": 1}
+            },
+            "sys_calculations": {
+                "links": {"related": "/api/v0/incidentReporting/injuredPerson/90001/sys_calculations"}
+            }
+        },
+        "links": {"self": "/api/v0/incidentReporting/injuredPerson/90001"}
+    },
+    {
+        "id": "90002",
+        "type": "injuredPerson",
+        "attributes": {
+            "injuredPersonRefNo": 5502,
+            "dateCreated": "2026-02-11T00:00:00",
+            "injuredPersonName": "Sample Injured Person Two",
+            "injuredPersonEmailAddress": "sample.injured.two@example-corp.test",
+            "injuredPersonJobTitle": None,
+            "injuredPersonPhoneNumber": None,
+            "employerContactDetails": None,
+            "shiftStartTime": "2000-01-01T09:00:00",
+            "treatmentDetails": "Sample fictional treatment note: minor first aid applied on site.",
+            "whatWasTheNameOfTheHospital": None,
+            "firstDayOfLostTime": None,
+            "lastDayOfLostTime": None,
+            "lastUpdatedOn": "2026-02-12T10:15:00",
+            "lastUpdatedBy": "Sample Reviewer Two",
+            "employerName": None,
+            "calculatedDaysOff": 0
+        },
+        "relationships": {
+            "typeOfPerson": {
+                "data": {"type": "luTypeOfPerson", "id": "2", "meta": {"displayValue": "Contractor"}},
+                "links": {"related": "/api/v0/incidentReporting/luTypeOfPerson/2"}
+            },
+            "employeeName": {"data": None},
+            "gender": {
+                "data": {"type": "luGender", "id": "2", "meta": {"displayValue": "Female"}},
+                "links": {"related": "/api/v0/incidentReporting/luGender/2"}
+            },
+            "whatTreatmentWasProvided": {
+                "data": {"type": "luTreatmentProvided", "id": "2", "meta": {"displayValue": "First Aid"}},
+                "links": {"related": "/api/v0/incidentReporting/luTreatmentProvided/2"}
+            },
+            "wasThisPersonPlacedOnRestrictedOrLight": {"data": None},
+            "thisALostTimeInjury": {
+                "data": {"type": "luYesNoUnknown", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNoUnknown/2"}
+            },
+            "bodyMap": {
+                "data": [],
+                "links": {"related": "/api/v0/incidentReporting/injuredPerson/90002/sys_imageHotSpots/bodyMap"},
+                "meta": {"totalCount": 0}
+            },
+            "doesThisIncidentNeedReportingToTheHse": {
+                "data": {"type": "luYesNoUnknown", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNoUnknown/2"}
+            },
+            "luInjuriesSustained": {
+                "data": [{"type": "luInjuriesSustained", "id": "2", "meta": {"displayValue": "Minor Cut/Abrasion"}}],
+                "links": {"related": "/api/v0/incidentReporting/injuredPerson/90002/luInjuriesSustained"},
+                "meta": {"totalCount": 1}
+            },
+            "sys_calculations": {
+                "links": {"related": "/api/v0/incidentReporting/injuredPerson/90002/sys_calculations"}
+            }
+        },
+        "links": {"self": "/api/v0/incidentReporting/injuredPerson/90002"}
+    },
+]
+
+INJURED_PERSON_TOTAL_COUNT = 2441  # fictional total, deliberately different from any real prod count
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
@@ -774,6 +912,50 @@ def get_risk_assessment():
         "links": {
             "next": f"/api/v0/riskAssessments/riskAssessment?page%5Blimit%5D={limit}&page%5Boffset%5D={next_offset}",
             "last": f"/api/v0/riskAssessments/riskAssessment?page%5Blimit%5D={limit}&page%5Boffset%5D={last_offset}",
+        },
+    }
+
+    return jsonify(response_body), 200, get_standard_headers()
+
+
+@app.route('/api/v0/incidentReporting/injuredPerson', methods=['GET'])
+def get_injured_person():
+    """
+    Mock endpoint mimicking InfoExchange (Shield) JSON:API dynamic endpoint
+    for the incidentReporting/injuredPerson table.
+
+    Query parameters supported:
+        page[limit]  - max records to return (default 3, capped at sample size)
+        page[offset] - offset into the sample set (wraps if beyond sample size)
+    """
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({
+            "errors": [{"detail": "Missing or invalid Authorization header"}]
+        }), 401, get_standard_headers()
+
+    try:
+        limit = int(request.args.get('page[limit]', 3))
+    except (TypeError, ValueError):
+        limit = 3
+
+    try:
+        offset = int(request.args.get('page[offset]', 0))
+    except (TypeError, ValueError):
+        offset = 0
+
+    start = offset % len(INJURED_PERSON_DATA)
+    records = (INJURED_PERSON_DATA * 2)[start:start + limit]
+
+    next_offset = offset + limit
+    last_offset = INJURED_PERSON_TOTAL_COUNT - limit
+
+    response_body = {
+        "data": records,
+        "meta": {"totalCount": INJURED_PERSON_TOTAL_COUNT},
+        "links": {
+            "next": f"/api/v0/incidentReporting/injuredPerson?page%5Blimit%5D={limit}&page%5Boffset%5D={next_offset}",
+            "last": f"/api/v0/incidentReporting/injuredPerson?page%5Blimit%5D={limit}&page%5Boffset%5D={last_offset}",
         },
     }
 
