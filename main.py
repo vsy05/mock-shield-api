@@ -16,6 +16,9 @@ Endpoints mocked:
     GET  /api/v0/riskAssessments/riskAssessment
         - JSON:API-shaped response with sample records
         - Supports page[limit] / page[offset] query params
+    GET  /api/v0/incidentReporting/injuredPerson
+        - JSON:API-shaped response with sample records
+        - Supports page[limit] / page[offset] query params
     GET  /health
         - Health check
 
@@ -25,9 +28,10 @@ Usage (local):
 
 Usage (once deployed to Cloud Run):
     SHIELD_BASE_URL=https://<cloud-run-url> CLIENT_ID=anything CLIENT_SECRET=anything BUCKET_ENV=dev \
-    bash shield_riskassessments_identifiedrisk_get_mocktest.bash
-    (or shield_incidentreporting_incidents_get_mocktest.bash /
-     shield_riskassessments_riskassessment_get_mocktest.bash for the other 2 endpoints)
+    bash shield_identifiedrisk_get_mocktest.bash
+    (or shield_incidents_get_mocktest.bash /
+     shield_riskassessment_get_mocktest.bash /
+     shield_injuredperson_get_mocktest.bash for the other 3 endpoints)
 """
 
 from flask import Flask, jsonify, request
