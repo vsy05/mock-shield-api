@@ -17,6 +17,7 @@ repeatably without hitting the real prod API.
 | GET    | `/api/v0/riskAssessments/identifiedRisk`    | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
 | GET    | `/api/v0/incidentReporting/incidents`       | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
 | GET    | `/api/v0/riskAssessments/riskAssessment`    | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
+| GET    | `/api/v0/incidentReporting/injuredPerson`   | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
 | GET    | `/health`                                   | Health check |
 
 ## Run locally
@@ -46,11 +47,14 @@ before running.
 
 Each endpoint has its own mock-only test script (no Secret Manager code
 path - `CLIENT_ID`/`CLIENT_SECRET` must be supplied as dummy environment
-values):
+values). Output filenames match real production naming exactly (no
+`MOCKTEST_` prefix, no `appName` segment) so downstream testing sees
+output indistinguishable from a real run by name alone:
 
-- `shield_riskassessments_identifiedrisk_get_mocktest.bash`
-- `shield_incidentreporting_incidents_get_mocktest.bash`
-- `shield_riskassessments_riskassessment_get_mocktest.bash`
+- `shield_identifiedrisk_get_mocktest.bash`
+- `shield_incidents_get_mocktest.bash`
+- `shield_riskassessment_get_mocktest.bash`
+- `shield_injuredperson_get_mocktest.bash`
 
 Once this mock is deployed:
 
@@ -60,9 +64,10 @@ export CLIENT_ID="anything"       # not validated by the mock
 export CLIENT_SECRET="anything"   # not validated by the mock
 export BUCKET_ENV=dev             # required - drives the GCS destination bucket
 
-bash shield_riskassessments_identifiedrisk_get_mocktest.bash
-bash shield_incidentreporting_incidents_get_mocktest.bash
-bash shield_riskassessments_riskassessment_get_mocktest.bash
+bash shield_identifiedrisk_get_mocktest.bash
+bash shield_incidents_get_mocktest.bash
+bash shield_riskassessment_get_mocktest.bash
+bash shield_injuredperson_get_mocktest.bash
 ```
 
 Since the Cloud Run URL is on `*.run.app`, it should already be reachable
@@ -73,9 +78,15 @@ Each script refuses to run if `SHIELD_BASE_URL` points at a real
 `info-exchange.com` domain, so they can never accidentally hit real Shield
 credentials or data.
 
+**Note on output naming**: since mock output is written to the same
+`landing/` GCS path as real production data, using identical filenames,
+there is no longer any filename-based way to distinguish mock output from
+real output in that folder - this is intentional (dev is understood to be
+mock-only), but worth being aware of for cleanup/auditing purposes.
+
 ## Status
 
-All 3 Shield endpoints used by the production pipeline are mocked here:
-`riskAssessments/identifiedRisk`, `incidentReporting/incidents`, and
-`riskAssessments/riskAssessment`. No further endpoints are currently
-planned.
+All 4 Shield endpoints used by the production pipeline are mocked here:
+`riskAssessments/identifiedRisk`, `incidentReporting/incidents`,
+`riskAssessments/riskAssessment`, and `incidentReporting/injuredPerson`.
+No further endpoints are currently planned.
