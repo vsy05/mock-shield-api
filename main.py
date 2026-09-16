@@ -41,15 +41,148 @@ import uuid
 app = Flask(__name__)
 
 
-def get_standard_headers():
-    """Generate standard response headers matching real API format."""
+def get_standard_headers(content_type='application/vnd.api+json'):
+    """
+    Generate standard response headers matching real API format.
+    content_type is overridable so a test call can deliberately simulate
+    a wrong Content-Type header (see the `simulate` param on the data
+    endpoints below) to prove the file_type validation check catches it.
+    """
     return {
         'Date': datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT'),
-        'Content-Type': 'application/vnd.api+json',
+        'Content-Type': content_type,
         'Connection': 'keep-alive',
         'Cache-Control': 'no-store',
         'X-Request-Id': uuid.uuid4().hex,
     }
+
+
+# ==============================================================================
+# Validation checks - ported verbatim from shield-api-file-extract's app.py,
+# added here ONLY so this mock can be used to demonstrate/test that the same
+# 4 checks correctly accept good data and reject each of the 4 failure modes.
+#
+# This is a TEST AID, not a production requirement: the real check is that
+# shield-api-file-extract validates data it downloads FROM Shield (or this
+# mock). Here, the checks are re-run against this mock's own output, purely
+# so a tester can hit ?simulate=<check_name> and see a 422 with the exact
+# same error a broken real Shield response would produce.
+#
+# Enable/disable with a request param: ?validate=true (see each endpoint).
+# Deliberately break one check at a time with: ?simulate=<name>, one of:
+#   file_type   - returns the response with a wrong Content-Type header
+#   utf8        - injects an invalid UTF-8 byte into the response
+#   json        - truncates the JSON body so it no longer parses
+#   row_size    - inflates one record's size past the 2MB per-row limit
+# ==============================================================================
+
+ENABLED_CHECKS = ['file_type', 'utf8_encoding', 'json_parsing', 'row_size']
+EXPECTED_CONTENT_TYPE = 'application/vnd.api+json'
+MAX_ROW_SIZE_MB = 2.0  # BigQuery per-row limit; Shield records run ~5-6KB in practice
+
+
+class ValidationError(Exception):
+    """Raised when a validation check fails."""
+    pass
+
+
+def check_file_type(response_headers, expected_content_type):
+    content_type = response_headers.get('Content-Type', '')
+    mime_type = content_type.split(';')[0].strip()
+    if mime_type != expected_content_type:
+        raise ValidationError(
+            f"Invalid Content-Type header: '{content_type}'. "
+            f"Expected '{expected_content_type}'."
+        )
+
+
+def check_utf8_encoding(file_bytes):
+    try:
+        file_bytes.decode('utf-8', errors='strict')
+    except UnicodeDecodeError:
+        raise ValidationError("File contains invalid UTF-8 bytes.")
+
+
+def check_json_parsing(ndjson_bytes):
+    import json as _json
+    text = ndjson_bytes.decode('utf-8', errors='replace')
+    for i, line in enumerate(text.splitlines(), 1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            _json.loads(line)
+        except _json.JSONDecodeError as e:
+            raise ValidationError(f"Invalid JSON syntax on record {i}: {e.msg}")
+
+
+def check_row_size(ndjson_bytes, max_size_mb):
+    text = ndjson_bytes.decode('utf-8', errors='replace')
+    for i, line in enumerate(text.splitlines(), 1):
+        if not line.strip():
+            continue
+        size_mb = len(line.encode('utf-8')) / (1024 * 1024)
+        if size_mb > max_size_mb:
+            raise ValidationError(
+                f"Record {i} size {size_mb:.2f}MB exceeds row limit of {max_size_mb}MB."
+            )
+
+
+def validate_page(ndjson_bytes, response_headers):
+    """Runs all enabled checks in order. Raises ValidationError on first failure."""
+    if 'file_type' in ENABLED_CHECKS:
+        check_file_type(response_headers, EXPECTED_CONTENT_TYPE)
+    if 'utf8_encoding' in ENABLED_CHECKS:
+        check_utf8_encoding(ndjson_bytes)
+    if 'json_parsing' in ENABLED_CHECKS:
+        check_json_parsing(ndjson_bytes)
+    if 'row_size' in ENABLED_CHECKS:
+        check_row_size(ndjson_bytes, MAX_ROW_SIZE_MB)
+
+
+def convert_to_ndjson(records):
+    """Same conversion shield-api-file-extract does: one record per line."""
+    import json as _json
+    lines = [_json.dumps(record, ensure_ascii=False) for record in records]
+    return ("\n".join(lines) + "\n").encode("utf-8") if lines else b""
+
+
+def run_self_validation(records, simulate, base_content_type):
+    """
+    Runs the 4 checks against this mock's own about-to-be-returned data,
+    optionally sabotaging it first per `simulate`, so a tester can prove
+    each check independently catches its corresponding failure mode.
+
+    Returns (is_valid, error_message_or_None, headers_to_use).
+    """
+    import copy
+    records = copy.deepcopy(records)
+    headers = get_standard_headers(base_content_type)
+
+    if simulate == 'file_type':
+        headers = get_standard_headers('text/html')  # wrong content-type
+
+    ndjson_bytes = convert_to_ndjson(records)
+
+    if simulate == 'utf8':
+        # Inject an invalid UTF-8 byte sequence directly into the bytes
+        ndjson_bytes = ndjson_bytes[:10] + b'\xff\xfe' + ndjson_bytes[10:]
+
+    if simulate == 'json':
+        # Truncate mid-object so JSON parsing breaks
+        ndjson_bytes = ndjson_bytes[:len(ndjson_bytes) // 2]
+
+    if simulate == 'row_size':
+        # Inflate the first record's size past the 2MB limit
+        if records:
+            records[0].setdefault('attributes', {})['_test_oversized_blob'] = 'A' * (3 * 1024 * 1024)
+        ndjson_bytes = convert_to_ndjson(records)
+
+    try:
+        validate_page(ndjson_bytes, headers)
+        return True, None, headers
+    except ValidationError as e:
+        return False, str(e), headers
 
 
 # ------------------------------------------------------------------
@@ -819,6 +952,21 @@ def get_identified_risk():
     start = offset % len(IDENTIFIED_RISK_DATA)
     records = (IDENTIFIED_RISK_DATA * 2)[start:start + limit]
 
+    # Optional: run the 4 validation checks against this response before
+    # returning it, so a tester can prove they work without a separate
+    # relay. ?validate=true runs the checks; ?simulate=<name> deliberately
+    # breaks one check (file_type, utf8, json, row_size) to prove it's
+    # actually being enforced, not just always passing.
+    if request.args.get('validate', '').lower() == 'true':
+        simulate = request.args.get('simulate')
+        is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
+        if not is_valid:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": error_message,
+                "simulated_failure": simulate,
+            }), 422, get_standard_headers()
+
     next_offset = offset + limit
     last_offset = IDENTIFIED_RISK_TOTAL_COUNT - limit
 
@@ -862,6 +1010,16 @@ def get_incidents():
 
     start = offset % len(INCIDENTS_DATA)
     records = (INCIDENTS_DATA * 2)[start:start + limit]
+
+    if request.args.get('validate', '').lower() == 'true':
+        simulate = request.args.get('simulate')
+        is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
+        if not is_valid:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": error_message,
+                "simulated_failure": simulate,
+            }), 422, get_standard_headers()
 
     next_offset = offset + limit
     last_offset = INCIDENTS_TOTAL_COUNT - limit
@@ -907,6 +1065,16 @@ def get_risk_assessment():
     start = offset % len(RISK_ASSESSMENT_DATA)
     records = (RISK_ASSESSMENT_DATA * 2)[start:start + limit]
 
+    if request.args.get('validate', '').lower() == 'true':
+        simulate = request.args.get('simulate')
+        is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
+        if not is_valid:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": error_message,
+                "simulated_failure": simulate,
+            }), 422, get_standard_headers()
+
     next_offset = offset + limit
     last_offset = RISK_ASSESSMENT_TOTAL_COUNT - limit
 
@@ -950,6 +1118,16 @@ def get_injured_person():
 
     start = offset % len(INJURED_PERSON_DATA)
     records = (INJURED_PERSON_DATA * 2)[start:start + limit]
+
+    if request.args.get('validate', '').lower() == 'true':
+        simulate = request.args.get('simulate')
+        is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
+        if not is_valid:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": error_message,
+                "simulated_failure": simulate,
+            }), 422, get_standard_headers()
 
     next_offset = offset + limit
     last_offset = INJURED_PERSON_TOTAL_COUNT - limit
