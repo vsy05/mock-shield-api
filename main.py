@@ -37,6 +37,9 @@ Usage (once deployed to Cloud Run):
 from flask import Flask, jsonify, request
 from datetime import datetime
 import uuid
+import gzip
+import io
+import os
 
 app = Flask(__name__)
 
@@ -1144,5 +1147,134 @@ def get_injured_person():
     return jsonify(response_body), 200, get_standard_headers()
 
 
+# ==============================================================================
+# Test-data landing helper
+#
+# Purpose: this mock has no real Cloud Run relay in front of it in dev (there
+# is no Shield sandbox tenant and no deployed shield-api-file-extract in this
+# environment), so nothing would normally perform the
+# fetch -> convert_to_ndjson -> gzip -> upload-to-GCS steps that happen in
+# prod. This section does exactly those same steps, using this mock's own
+# sample data as the source instead of a real Shield API call, and lands the
+# result at the same GCS path/filename convention the real pipeline uses -
+# so a Control-M job pointed at this bucket sees the same shape of file it
+# would see in production, and the downstream ingest/cc jobs can be run
+# against it unmodified.
+#
+# This intentionally does NOT touch the mock's HTTP endpoints above (they
+# keep returning the raw JSON:API envelope, as the real Shield API does) -
+# this is a separate, additional code path used only to seed GCS for testing.
+# ==============================================================================
+
+FEED_CONFIG = {
+    "identifiedrisk": {
+        "data_fn": lambda: IDENTIFIED_RISK_DATA,
+        "gcs_folder": "identifiedrisk_list_all",
+        "filename_prefix": "SHIELD_IDENTIFIEDRISK_LIST_ALL",
+    },
+    "incidents": {
+        "data_fn": lambda: INCIDENTS_DATA,
+        "gcs_folder": "incidents_list_all",
+        "filename_prefix": "SHIELD_INCIDENTS_LIST_ALL",
+    },
+    "riskassessment": {
+        "data_fn": lambda: RISK_ASSESSMENT_DATA,
+        "gcs_folder": "riskassessment_list_all",
+        "filename_prefix": "SHIELD_RISKASSESSMENT_LIST_ALL",
+    },
+    "injuredperson": {
+        "data_fn": lambda: INJURED_PERSON_DATA,
+        "gcs_folder": "injuredperson_list_all",
+        "filename_prefix": "SHIELD_INJUREDPERSON_LIST_ALL",
+    },
+}
+
+
+def _gzip_bytes(data_bytes):
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode="wb") as gz:
+        gz.write(data_bytes)
+    return out.getvalue()
+
+
+def _upload_bytes_to_gcs(bucket_name, blob_path, data_bytes):
+    """Uploads raw bytes to GCS. Requires google-cloud-storage and ADC/creds
+    available in the environment this is run from (e.g. gcloud auth
+    application-default login, or a service account on the box)."""
+    from google.cloud import storage
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(blob_path)
+    blob.upload_from_string(data_bytes)
+    return f"gs://{bucket_name}/{blob_path}"
+
+
+def land_test_file(feed_key, bucket_env, page_num=1, timestamp=None):
+    """
+    Generates one landing-ready gzipped NDJSON file for the given feed from
+    this mock's own sample data, and uploads it to
+    gs://skyuk-uk-lan-tds-shield-is-<bucket_env>/<feed>/landing/<filename>.json.gz
+    exactly as the real pipeline would name and shape it.
+    """
+    if feed_key not in FEED_CONFIG:
+        raise ValueError(f"Unknown feed_key '{feed_key}'. Valid: {list(FEED_CONFIG.keys())}")
+
+    cfg = FEED_CONFIG[feed_key]
+    records = cfg["data_fn"]()
+
+    # Same conversion the real relay (app.py) performs: one record per line, unwrapped
+    ndjson_bytes = convert_to_ndjson(records)
+    gzipped = _gzip_bytes(ndjson_bytes)
+
+    ts = timestamp or datetime.utcnow().strftime('%Y%m%d%H%M%S')
+    filename = f"{cfg['filename_prefix']}_{ts}_{page_num}.json.gz"
+    bucket_name = f"skyuk-uk-lan-tds-shield-is-{bucket_env}"
+    blob_path = f"{cfg['gcs_folder']}/landing/{filename}"
+
+    gcs_uri = _upload_bytes_to_gcs(bucket_name, blob_path, gzipped)
+    return {
+        "feed": feed_key,
+        "records_landed": len(records),
+        "gcs_uri": gcs_uri,
+    }
+
+
+@app.route('/mock_land_test_file', methods=['POST'])
+def mock_land_test_file():
+    """
+    Test-only endpoint: lands one gzipped NDJSON file to GCS for a given
+    feed, using this mock's own sample data, in the exact shape/path/naming
+    convention the real pipeline uses.
+
+    Body: {"feed": "identifiedrisk", "bucket_env": "dev"}
+    feed one of: identifiedrisk | incidents | riskassessment | injuredperson
+    """
+    data = request.get_json(silent=True) or {}
+    feed_key = data.get("feed")
+    bucket_env = data.get("bucket_env", os.environ.get("BUCKET_ENV", "dev"))
+
+    if not feed_key:
+        return jsonify({"error": "Missing required field: feed"}), 400
+
+    try:
+        result = land_test_file(feed_key, bucket_env)
+        return jsonify({"status": "success", **result}), 200
+    except Exception as ex:
+        return jsonify({"error": str(ex)}), 500
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    import sys
+    # CLI mode: land test files directly without running the Flask server.
+    # Usage: python3 main.py --land-test-data [feed] [bucket_env]
+    #   python3 main.py --land-test-data identifiedrisk dev
+    #   python3 main.py --land-test-data all dev
+    if len(sys.argv) > 1 and sys.argv[1] == '--land-test-data':
+        feed_arg = sys.argv[2] if len(sys.argv) > 2 else 'all'
+        env_arg = sys.argv[3] if len(sys.argv) > 3 else os.environ.get('BUCKET_ENV', 'dev')
+        feeds_to_land = list(FEED_CONFIG.keys()) if feed_arg == 'all' else [feed_arg]
+        for fk in feeds_to_land:
+            result = land_test_file(fk, env_arg)
+            print(f"{result['feed']}: landed {result['records_landed']} records -> {result['gcs_uri']}")
+    else:
+        app.run(host='0.0.0.0', port=8080, debug=True)
