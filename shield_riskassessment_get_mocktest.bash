@@ -2,16 +2,17 @@
 ################################################################################
 # Filename        : shield_riskassessment_get_mocktest.bash
 # Description     : MOCK-ONLY test script for the mock-shield-api Cloud Run
-#                    service. Contains NO Secret Manager code path - CLIENT_ID
-#                    and CLIENT_SECRET must already be set in the environment,
-#                    or the script refuses to run. Safe to use for testing
-#                    against the mock without any risk of touching real
-#                    Shield credentials. Uploads the (mock) result to GCS,
+#                    service. CLIENT_ID/CLIENT_SECRET are fetched from
+#                    Secret Manager by default (using this VM's own
+#                    identity, same as the real production scripts) if not
+#                    already set in the environment - export both to
+#                    override with a specific value instead (e.g. to
+#                    deliberately test a mismatch). Uploads the (mock)
+#                    result to GCS,
 #                    using your ambient GCP login (not a Shield credential),
 #                    into a clearly-separate mock_test_landing/ path so it
 #                    can never be confused with real landing/ data.
 # Usage           : BUCKET_ENV=dev SHIELD_BASE_URL="https://<mock-cloud-run-url>" \
-#                    CLIENT_ID="anything" CLIENT_SECRET="anything" \
 #                    bash shield_riskassessments_identifiedrisk_get_mocktest.bash
 ################################################################################
 
@@ -31,9 +32,20 @@ PAGE_LIMIT=2
 OUTPUT_DIR="./output"
 OUTPUT_FILE_PREFIX="SHIELD_RISKASSESSMENT_LIST_ALL"
 
+# Secret Manager - used to fetch CLIENT_ID/CLIENT_SECRET by default, proving
+# the whole chain (this VM's identity -> Secret Manager -> real stored
+# values) works end to end, exactly mirroring how the real production
+# extraction scripts (shield_*_list_all.bash) fetch credentials. An
+# explicit CLIENT_ID/CLIENT_SECRET env var still overrides this, e.g. to
+# deliberately test a mismatch against what main.py validates server-side.
+CLIENT_ID_SECRET="dta_corpops_shield_client_id"
+CLIENT_SECRET_SECRET="dta_corpops_shield_client_secret"
+SECRET_PROJECT="skyuk-uk-corpops-vfy-${BUCKET_ENV}"
+
 # GCS upload - uses your ambient GCP login (gsutil), NOT a Shield credential.
-# Lands in landing/ alongside real data; the MOCKTEST_ filename prefix keeps
-# it clearly distinguishable from real SHIELD_... files in the same folder.
+# Lands in landing/ alongside real data, using the same filename convention
+# as production - there is no way to distinguish this output by name alone
+# once uploaded (see README's "Note on output naming").
 DESTINATION_BUCKET="skyuk-uk-lan-tds-shield-is-${BUCKET_ENV}"
 GCS_PATH_PREFIX="riskassessment_list_all/landing/"
 
@@ -57,8 +69,9 @@ error_exit() {
 
 ################################################################################
 # Function: require_mock_env
-# Hard-fails if BASE_URL, CLIENT_ID, or CLIENT_SECRET are not explicitly set.
-# NO Secret Manager fallback exists anywhere in this file.
+# Hard-fails if BASE_URL or BUCKET_ENV are not explicitly set. CLIENT_ID/
+# CLIENT_SECRET are no longer required here - if not exported, they are
+# fetched from Secret Manager instead (see get_client_credentials below).
 ################################################################################
 require_mock_env() {
     if [ -z "${BASE_URL}" ]; then
@@ -69,15 +82,48 @@ require_mock_env() {
         error_exit "SHIELD_BASE_URL points at a real info-exchange.com domain (${BASE_URL}). This mock-only script refuses to run against anything but a mock endpoint. Aborting."
     fi
 
-    if [ -z "${CLIENT_ID:-}" ] || [ -z "${CLIENT_SECRET:-}" ]; then
-        error_exit "CLIENT_ID and/or CLIENT_SECRET are not set. Export dummy values before running (e.g. CLIENT_ID=anything CLIENT_SECRET=anything) - this script has no Secret Manager fallback."
-    fi
-
     if [ -z "${BUCKET_ENV:-}" ]; then
-        error_exit "BUCKET_ENV is not set. Set it (e.g. BUCKET_ENV=dev) so the GCS destination bucket can be determined."
+        error_exit "BUCKET_ENV is not set. Set it (e.g. BUCKET_ENV=dev) so the GCS destination bucket and Secret Manager project can be determined."
     fi
 
-    log "Mock environment confirmed: BASE_URL=${BASE_URL}, BUCKET_ENV=${BUCKET_ENV}, using CLIENT_ID/CLIENT_SECRET from environment (no Secret Manager call will be made)"
+    if [ -n "${CLIENT_ID:-}" ] || [ -n "${CLIENT_SECRET:-}" ]; then
+        log "Mock environment confirmed: BASE_URL=${BASE_URL}, BUCKET_ENV=${BUCKET_ENV}, using CLIENT_ID/CLIENT_SECRET from environment (Secret Manager fetch skipped since an override was supplied)"
+    else
+        log "Mock environment confirmed: BASE_URL=${BASE_URL}, BUCKET_ENV=${BUCKET_ENV}, CLIENT_ID/CLIENT_SECRET not exported - will fetch from Secret Manager (project: ${SECRET_PROJECT})"
+    fi
+}
+
+################################################################################
+# Function: get_client_credentials
+# Fetches CLIENT_ID/CLIENT_SECRET from Secret Manager, using this VM's own
+# ambient gcloud identity - the same mechanism the real production
+# extraction scripts use. Proves this VM can genuinely read the real
+# stored values, not just that some string was typed into an env var.
+# Only called if CLIENT_ID/CLIENT_SECRET were not already exported.
+################################################################################
+get_client_credentials() {
+    log "CLIENT_ID/CLIENT_SECRET not set - fetching from Secret Manager (project: ${SECRET_PROJECT})..."
+
+    local fetched_client_id fetched_client_secret
+
+    fetched_client_id=$(gcloud secrets versions access latest \
+        --secret="${CLIENT_ID_SECRET}" \
+        --project="${SECRET_PROJECT}" 2>&1)
+    if [ $? -ne 0 ]; then
+        error_exit "Failed to fetch ${CLIENT_ID_SECRET} from Secret Manager (project: ${SECRET_PROJECT}): ${fetched_client_id}"
+    fi
+
+    fetched_client_secret=$(gcloud secrets versions access latest \
+        --secret="${CLIENT_SECRET_SECRET}" \
+        --project="${SECRET_PROJECT}" 2>&1)
+    if [ $? -ne 0 ]; then
+        error_exit "Failed to fetch ${CLIENT_SECRET_SECRET} from Secret Manager (project: ${SECRET_PROJECT}): ${fetched_client_secret}"
+    fi
+
+    log "Successfully fetched CLIENT_ID/CLIENT_SECRET from Secret Manager"
+
+    CLIENT_ID="${fetched_client_id}"
+    CLIENT_SECRET="${fetched_client_secret}"
 }
 
 ################################################################################
@@ -218,6 +264,10 @@ main() {
     log "=== MOCK TEST: InfoExchange (Shield) riskAssessments/riskAssessment ==="
 
     require_mock_env
+
+    if [ -z "${CLIENT_ID:-}" ] || [ -z "${CLIENT_SECRET:-}" ]; then
+        get_client_credentials
+    fi
 
     mkdir -p "${OUTPUT_DIR}"
 
