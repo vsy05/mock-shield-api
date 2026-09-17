@@ -158,10 +158,29 @@ fetch_page() {
 }
 
 ################################################################################
+# Function: convert_to_ndjson
+# Mirrors shield-api-file-extract's app.py convert_to_ndjson(): unwraps the
+# JSON:API envelope's "data" array and re-serialises each element onto its
+# own line. This step is what actually happens in production between the
+# raw Shield/mock response and what lands in GCS - without it, this script
+# would upload the raw, unexploded envelope, which does not match what the
+# real pipeline (or the downstream arc/cc ingest jobs) actually expects.
+################################################################################
+convert_to_ndjson() {
+    local response_body="$1"
+
+    if ! command -v jq &> /dev/null; then
+        error_exit "jq is required to convert the mock response to NDJSON but is not installed."
+    fi
+
+    echo "${response_body}" | jq -c '.data[]'
+}
+
+################################################################################
 # Function: upload_to_gcs
-# Gzips the mock response and uploads it via gsutil, using your ambient GCP
-# login - not a Shield credential. Lands in mock_test_landing/, separate
-# from any real Shield data path.
+# Converts the mock response to NDJSON (one record per line, matching what
+# the real relay's convert_to_ndjson() produces), gzips it, and uploads via
+# gsutil, using your ambient GCP login - not a Shield credential.
 ################################################################################
 upload_to_gcs() {
     local response_body="$1"
@@ -170,7 +189,13 @@ upload_to_gcs() {
     local output_file_name="${OUTPUT_FILE_PREFIX}_${timestamp}_1.json"
     local tmp_file
     tmp_file=$(mktemp)
-    echo "${response_body}" > "${tmp_file}"
+
+    convert_to_ndjson "${response_body}" > "${tmp_file}"
+
+    local ndjson_line_count
+    ndjson_line_count=$(wc -l < "${tmp_file}")
+    log "Converted response to NDJSON: ${ndjson_line_count} record line(s)"
+
     gzip -f "${tmp_file}"
 
     local gcs_dest="gs://${DESTINATION_BUCKET}/${GCS_PATH_PREFIX}${output_file_name}.gz"
@@ -218,8 +243,12 @@ main() {
     timestamp=$(date -u '+%Y%m%d%H%M%S')
 
     local out_file="${OUTPUT_DIR}/${OUTPUT_FILE_PREFIX}_sample.json"
-    echo "${response_body}" > "${out_file}"
-    log "Saved local copy to ${out_file}"
+    convert_to_ndjson "${response_body}" > "${out_file}"
+    log "Saved local NDJSON copy (matches what lands in GCS) to ${out_file}"
+
+    local raw_out_file="${OUTPUT_DIR}/${OUTPUT_FILE_PREFIX}_raw_envelope_sample.json"
+    echo "${response_body}" > "${raw_out_file}"
+    log "Saved raw (unconverted) envelope for reference to ${raw_out_file}"
 
     if command -v jq &> /dev/null; then
         local total_count page_record_count
