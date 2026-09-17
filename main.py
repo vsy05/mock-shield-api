@@ -44,6 +44,45 @@ import os
 app = Flask(__name__)
 
 
+# ==============================================================================
+# Secret Manager validation for /identity/connect/token
+#
+# Purpose: prove the mock's own Cloud Run runtime service account can
+# actually reach Secret Manager, rather than just accepting any
+# client_id/client_secret blindly. The mock now reads the EXPECTED
+# client_id/client_secret from Secret Manager itself at request time and
+# compares them against whatever was submitted.
+#
+# To keep existing test scripts (CLIENT_ID=anything CLIENT_SECRET=anything)
+# working unchanged, store the literal string "anything" as the value of
+# both secrets below - the comparison then still passes, but only because
+# Secret Manager was genuinely reached and read, not because validation
+# was skipped.
+#
+# Secret names/project are overridable via env vars so this can point at
+# whichever project/secrets you've set up without a code change.
+# ==============================================================================
+
+SECRET_MANAGER_PROJECT = os.environ.get('SECRET_MANAGER_PROJECT', 'skyuk-uk-corpops-vfy-dev')
+CLIENT_ID_SECRET_NAME = os.environ.get('CLIENT_ID_SECRET_NAME', 'dta_corpops_shield_client_id')
+CLIENT_SECRET_SECRET_NAME = os.environ.get('CLIENT_SECRET_SECRET_NAME', 'dta_corpops_shield_client_secret')
+
+
+def get_secret_from_manager(secret_id, project=SECRET_MANAGER_PROJECT, version='latest'):
+    """
+    Reads a secret value from Secret Manager. Raises on any failure
+    (permission denied, not found, destroyed version, etc.) rather than
+    swallowing errors - the caller needs to distinguish "Secret Manager
+    unreachable" from "credentials didn't match" for this to be a useful
+    connectivity test.
+    """
+    from google.cloud import secretmanager
+    client = secretmanager.SecretManagerServiceClient()
+    secret_path = f"projects/{project}/secrets/{secret_id}/versions/{version}"
+    response = client.access_secret_version(request={"name": secret_path})
+    return response.payload.data.decode("UTF-8").strip()
+
+
 def get_standard_headers(content_type='application/vnd.api+json'):
     """
     Generate standard response headers matching real API format.
@@ -909,12 +948,52 @@ def health_check():
 def get_token():
     """
     Mock OAuth2 client_credentials token endpoint.
-    Accepts any client_id/client_secret - this mock does not validate
-    credentials, it only tests the pipeline's request/response handling.
+
+    Unlike a pure "accept anything" mock, this now reads the EXPECTED
+    client_id/client_secret from Secret Manager itself (server-side, using
+    this Cloud Run service's own runtime service account) and compares
+    them against whatever was submitted. This proves Secret Manager
+    connectivity genuinely works, not just that credentials were supplied.
+
+    Three distinct failure modes are surfaced separately so a tester can
+    tell them apart:
+      - 500 secret_manager_unreachable: the mock's service account could
+        not read the secret at all (permission denied, destroyed version,
+        secret doesn't exist, etc.) - this is the actual connectivity
+        problem to fix.
+      - 401 invalid_client: Secret Manager was reached fine, but the
+        submitted client_id/client_secret didn't match the stored values.
+      - 200 success: both credentials matched what Secret Manager returned.
     """
     grant_type = request.form.get('grant_type')
     if grant_type != 'client_credentials':
         return jsonify({"error": "unsupported_grant_type"}), 400, get_standard_headers()
+
+    submitted_client_id = request.form.get('client_id', '')
+    submitted_client_secret = request.form.get('client_secret', '')
+
+    try:
+        expected_client_id = get_secret_from_manager(CLIENT_ID_SECRET_NAME)
+        expected_client_secret = get_secret_from_manager(CLIENT_SECRET_SECRET_NAME)
+    except Exception as ex:
+        return jsonify({
+            "error": "secret_manager_unreachable",
+            "error_description": (
+                f"Could not read expected credentials from Secret Manager "
+                f"(project={SECRET_MANAGER_PROJECT}, secrets="
+                f"{CLIENT_ID_SECRET_NAME}/{CLIENT_SECRET_SECRET_NAME}): "
+                f"{type(ex).__name__}: {ex}"
+            ),
+        }), 500, get_standard_headers()
+
+    if submitted_client_id != expected_client_id or submitted_client_secret != expected_client_secret:
+        return jsonify({
+            "error": "invalid_client",
+            "error_description": (
+                "Secret Manager was reached successfully, but the submitted "
+                "client_id/client_secret did not match the values stored there."
+            ),
+        }), 401, get_standard_headers()
 
     return jsonify({
         "access_token": "MOCK-ACCESS-TOKEN-FOR-TESTING",
