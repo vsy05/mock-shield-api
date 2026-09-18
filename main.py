@@ -61,9 +61,18 @@ app = Flask(__name__)
 #
 # Secret names/project are overridable via env vars so this can point at
 # whichever project/secrets you've set up without a code change.
+#
+# SECRET_MANAGER_PROJECT resolves in this order:
+#   1. Explicit SECRET_MANAGER_PROJECT env var, if set (highest priority)
+#   2. PROJ_ID env var - already set on every deploy via
+#      --set-env-vars=PROJ_ID=${PROJECT_ID} in cloudbuild-deploy.yaml, so
+#      this automatically follows whichever project the service is
+#      actually running in (dev, test, etc.) with no per-environment
+#      config needed
+#   3. Hardcoded 'skyuk-uk-corpops-vfy-dev' as a last-resort fallback only
 # ==============================================================================
 
-SECRET_MANAGER_PROJECT = os.environ.get('SECRET_MANAGER_PROJECT', 'skyuk-uk-corpops-vfy-dev')
+SECRET_MANAGER_PROJECT = os.environ.get('SECRET_MANAGER_PROJECT') or os.environ.get('PROJ_ID', 'skyuk-uk-corpops-vfy-dev')
 CLIENT_ID_SECRET_NAME = os.environ.get('CLIENT_ID_SECRET_NAME', 'dta_corpops_shield_client_id')
 CLIENT_SECRET_SECRET_NAME = os.environ.get('CLIENT_SECRET_SECRET_NAME', 'dta_corpops_shield_client_secret')
 
