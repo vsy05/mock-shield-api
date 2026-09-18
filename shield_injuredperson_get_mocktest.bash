@@ -149,6 +149,13 @@ get_identity_token() {
 # Simulates the mock's OAuth client_credentials exchange. The identity_token
 # is passed here only to satisfy Cloud Run's own invoker check on the way
 # in - it is unrelated to the mock app's own client_id/client_secret logic.
+#
+# NOTE: this function is called via command substitution ($(...)) in main(),
+# so calling error_exit here only terminates THIS subshell - it does NOT
+# stop the parent script. That's why main() below also explicitly checks
+# whether access_token came back empty and calls error_exit itself in the
+# parent shell. Do not rely on error_exit inside this function alone to
+# halt the script.
 ################################################################################
 get_access_token() {
     local client_id="$1"
@@ -176,7 +183,8 @@ get_access_token() {
 
     if [ -z "${access_token}" ]; then
         log "Token response: ${token_response}"
-        error_exit "Failed to obtain access token"
+        log "ERROR: Failed to obtain access token"
+        return 1
     fi
 
     log "Access token obtained successfully (mock OAuth flow confirmed working)"
@@ -276,6 +284,9 @@ main() {
 
     local access_token
     access_token=$(get_access_token "${CLIENT_ID}" "${CLIENT_SECRET}" "${identity_token}")
+    if [ -z "${access_token}" ]; then
+        error_exit "Failed to obtain access token - aborting before fetching data (see log above for details)"
+    fi
 
     local response http_code response_body
     response=$(fetch_page "${identity_token}" 0)
