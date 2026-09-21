@@ -1043,6 +1043,25 @@ def get_identified_risk():
     start = offset % len(IDENTIFIED_RISK_DATA)
     records = (IDENTIFIED_RISK_DATA * 2)[start:start + limit]
 
+    # Unconditional row_size check against the ACTUAL records about to be
+    # returned - not a simulated/inflated copy. This means if a tester
+    # manually bloats a sample record's real content in this file (e.g.
+    # pads a text field past the 2MB limit), a plain GET call with no
+    # ?validate=true param will naturally return 422 here. Any of the
+    # standard mocktest scripts calling this endpoint will then fail via
+    # their own existing `if [ "${http_code}" != "200" ]` check - no
+    # separate validation call, endpoint, or script change is needed to
+    # catch this; inflating the data is enough to make the corresponding
+    # mocktest script fail on its own.
+    if 'row_size' in ENABLED_CHECKS:
+        try:
+            check_row_size(convert_to_ndjson(records), MAX_ROW_SIZE_MB)
+        except ValidationError as e:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": str(e),
+            }), 422, get_standard_headers()
+
     # Optional: run the 4 validation checks against this response before
     # returning it, so a tester can prove they work without a separate
     # relay. ?validate=true runs the checks; ?simulate=<name> deliberately
@@ -1102,6 +1121,25 @@ def get_incidents():
     start = offset % len(INCIDENTS_DATA)
     records = (INCIDENTS_DATA * 2)[start:start + limit]
 
+    # Unconditional row_size check against the ACTUAL records about to be
+    # returned - not a simulated/inflated copy. This means if a tester
+    # manually bloats a sample record's real content in this file (e.g.
+    # pads a text field past the 2MB limit), a plain GET call with no
+    # ?validate=true param will naturally return 422 here. Any of the
+    # standard mocktest scripts calling this endpoint will then fail via
+    # their own existing `if [ "${http_code}" != "200" ]` check - no
+    # separate validation call, endpoint, or script change is needed to
+    # catch this; inflating the data is enough to make the corresponding
+    # mocktest script fail on its own.
+    if 'row_size' in ENABLED_CHECKS:
+        try:
+            check_row_size(convert_to_ndjson(records), MAX_ROW_SIZE_MB)
+        except ValidationError as e:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": str(e),
+            }), 422, get_standard_headers()
+
     if request.args.get('validate', '').lower() == 'true':
         simulate = request.args.get('simulate')
         is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
@@ -1156,6 +1194,25 @@ def get_risk_assessment():
     start = offset % len(RISK_ASSESSMENT_DATA)
     records = (RISK_ASSESSMENT_DATA * 2)[start:start + limit]
 
+    # Unconditional row_size check against the ACTUAL records about to be
+    # returned - not a simulated/inflated copy. This means if a tester
+    # manually bloats a sample record's real content in this file (e.g.
+    # pads a text field past the 2MB limit), a plain GET call with no
+    # ?validate=true param will naturally return 422 here. Any of the
+    # standard mocktest scripts calling this endpoint will then fail via
+    # their own existing `if [ "${http_code}" != "200" ]` check - no
+    # separate validation call, endpoint, or script change is needed to
+    # catch this; inflating the data is enough to make the corresponding
+    # mocktest script fail on its own.
+    if 'row_size' in ENABLED_CHECKS:
+        try:
+            check_row_size(convert_to_ndjson(records), MAX_ROW_SIZE_MB)
+        except ValidationError as e:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": str(e),
+            }), 422, get_standard_headers()
+
     if request.args.get('validate', '').lower() == 'true':
         simulate = request.args.get('simulate')
         is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
@@ -1209,6 +1266,25 @@ def get_injured_person():
 
     start = offset % len(INJURED_PERSON_DATA)
     records = (INJURED_PERSON_DATA * 2)[start:start + limit]
+
+    # Unconditional row_size check against the ACTUAL records about to be
+    # returned - not a simulated/inflated copy. This means if a tester
+    # manually bloats a sample record's real content in this file (e.g.
+    # pads a text field past the 2MB limit), a plain GET call with no
+    # ?validate=true param will naturally return 422 here. Any of the
+    # standard mocktest scripts calling this endpoint will then fail via
+    # their own existing `if [ "${http_code}" != "200" ]` check - no
+    # separate validation call, endpoint, or script change is needed to
+    # catch this; inflating the data is enough to make the corresponding
+    # mocktest script fail on its own.
+    if 'row_size' in ENABLED_CHECKS:
+        try:
+            check_row_size(convert_to_ndjson(records), MAX_ROW_SIZE_MB)
+        except ValidationError as e:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": str(e),
+            }), 422, get_standard_headers()
 
     if request.args.get('validate', '').lower() == 'true':
         simulate = request.args.get('simulate')
