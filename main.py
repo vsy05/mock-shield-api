@@ -34,7 +34,7 @@ Usage (once deployed to Cloud Run):
      shield_injuredperson_get_mocktest.bash for the other 3 endpoints)
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from datetime import datetime
 import uuid
 import gzip
@@ -131,6 +131,22 @@ ENABLED_CHECKS = ['file_type', 'utf8_encoding', 'json_parsing', 'row_size']
 EXPECTED_CONTENT_TYPE = 'application/vnd.api+json'
 MAX_ROW_SIZE_MB = 2.0  # BigQuery per-row limit; Shield records run ~5-6KB in practice
 
+# ------------------------------------------------------------------
+# Tester-editable knobs for the mock's OWN real response.
+#
+# Unlike editing sample record content (which affects row_size directly,
+# since size is a pure function of content regardless of code path),
+# content-type and encoding are properties of HOW the response is built,
+# not something derivable from record content. Editing these two
+# constants directly - no ?validate=true/simulate param, no separate
+# script - genuinely changes what bytes/headers this mock's GET
+# endpoints send back, and the unconditional checks below (mirroring
+# exactly what app.py always does in production, with no opt-in) will
+# catch a real mismatch on the very next plain GET call.
+# ------------------------------------------------------------------
+RESPONSE_CONTENT_TYPE = 'application/vnd.api+json'
+RESPONSE_ENCODING = 'utf-8'
+
 
 class ValidationError(Exception):
     """Raised when a validation check fails."""
@@ -189,6 +205,55 @@ def validate_page(ndjson_bytes, response_headers):
         check_json_parsing(ndjson_bytes)
     if 'row_size' in ENABLED_CHECKS:
         check_row_size(ndjson_bytes, MAX_ROW_SIZE_MB)
+
+
+def build_and_validate_response(response_body, records):
+    """
+    Builds this mock's ACTUAL HTTP response using RESPONSE_CONTENT_TYPE/
+    RESPONSE_ENCODING above, and validates that real output before
+    returning it - mirroring exactly what app.py always does
+    unconditionally in production (file_type, utf8_encoding, row_size;
+    no opt-in flag exists there at all). This is deliberately separate
+    from run_self_validation()/?validate=true&simulate=X below, which
+    remains a manual, on-demand way to prove each check fires - this
+    function is what makes editing RESPONSE_CONTENT_TYPE/RESPONSE_ENCODING
+    (or a sample record's size) enough on its own, with no query param
+    or separate script, to make a plain GET call genuinely fail.
+
+    Returns a Flask Response object - either the real success response,
+    or a 422 built the same way app.py's own failure responses are.
+    """
+    import json as _json
+
+    response_headers = get_standard_headers(RESPONSE_CONTENT_TYPE)
+
+    try:
+        raw_bytes = _json.dumps(response_body, ensure_ascii=False).encode(RESPONSE_ENCODING)
+    except (LookupError, UnicodeEncodeError) as e:
+        return jsonify({
+            "validation_result": "FAILED",
+            "error": f"Failed to encode response using RESPONSE_ENCODING={RESPONSE_ENCODING!r}: {e}",
+        }), 422, get_standard_headers()
+
+    if 'file_type' in ENABLED_CHECKS:
+        try:
+            check_file_type(response_headers, EXPECTED_CONTENT_TYPE)
+        except ValidationError as e:
+            return jsonify({"validation_result": "FAILED", "error": str(e)}), 422, get_standard_headers()
+
+    if 'utf8_encoding' in ENABLED_CHECKS:
+        try:
+            check_utf8_encoding(raw_bytes)
+        except ValidationError as e:
+            return jsonify({"validation_result": "FAILED", "error": str(e)}), 422, get_standard_headers()
+
+    if 'row_size' in ENABLED_CHECKS:
+        try:
+            check_row_size(convert_to_ndjson(records), MAX_ROW_SIZE_MB)
+        except ValidationError as e:
+            return jsonify({"validation_result": "FAILED", "error": str(e)}), 422, get_standard_headers()
+
+    return Response(raw_bytes, status=200, headers=response_headers, mimetype=RESPONSE_CONTENT_TYPE)
 
 
 def convert_to_ndjson(records):
@@ -1089,7 +1154,7 @@ def get_identified_risk():
         },
     }
 
-    return jsonify(response_body), 200, get_standard_headers()
+    return build_and_validate_response(response_body, records)
 
 
 @app.route('/api/v0/incidentReporting/incidents', methods=['GET'])
@@ -1162,7 +1227,7 @@ def get_incidents():
         },
     }
 
-    return jsonify(response_body), 200, get_standard_headers()
+    return build_and_validate_response(response_body, records)
 
 
 @app.route('/api/v0/riskAssessments/riskAssessment', methods=['GET'])
@@ -1235,7 +1300,7 @@ def get_risk_assessment():
         },
     }
 
-    return jsonify(response_body), 200, get_standard_headers()
+    return build_and_validate_response(response_body, records)
 
 
 @app.route('/api/v0/incidentReporting/injuredPerson', methods=['GET'])
@@ -1308,7 +1373,7 @@ def get_injured_person():
         },
     }
 
-    return jsonify(response_body), 200, get_standard_headers()
+    return build_and_validate_response(response_body, records)
 
 
 # ==============================================================================
