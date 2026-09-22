@@ -26,8 +26,6 @@ substitutions:
   _TAG: 'v1.0.0'
   _REGION: 'europe-west1'
   _REPO_NAME: 'dta-corpops-vfy-cloudrun'
-  _REPO_PROJ: 'skyuk-uk-corpops-vfy'
-  _REPO_ENV: 'dev'
 
 # Push images to Artifact Registry
 images:
@@ -36,7 +34,6 @@ images:
 
 timeout: '1200s'
 options:
-  dynamicSubstitutions: true
   logging: CLOUD_LOGGING_ONLY
 
-serviceAccount: 'projects/${_REPO_PROJ}-${_REPO_ENV}/serviceAccounts/corpops-deploy-build@${_REPO_PROJ}-${_REPO_ENV}.iam.gserviceaccount.com'
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/corpops-deploy-build@$PROJECT_ID.iam.gserviceaccount.com'

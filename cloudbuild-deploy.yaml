@@ -17,7 +17,7 @@ steps:
       - -c
       - >
         gcloud run deploy ${_SERV_NAME}
-        --image ${_REGION}-docker.pkg.dev/${_REPO_PROJ}-${_REPO_ENV}/${_REPO_NAME}/mock-shield-api:${_TAG}
+        --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/mock-shield-api:${_TAG}
         --region ${_REGION} --service-account ${_SA_ACCOUNT}
         --revision-suffix $(cat uid.txt)
         --memory ${_SERV_MEM} --cpu ${_SERV_CPU} --timeout=${_SERV_TIMEOUT}
@@ -28,8 +28,6 @@ substitutions:
   _TAG: v1.0.0
   _REGION: europe-west1
   _REPO_NAME: dta-corpops-vfy-cloudrun
-  _REPO_PROJ: skyuk-uk-corpops-vfy
-  _REPO_ENV: dev
   _SA_NAME: corpops-dataload-run
   _SA_ACCOUNT: ${_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
   _SERV_NAME: mock-shield-api
@@ -41,7 +39,7 @@ options:
   dynamicSubstitutions: true
   logging: CLOUD_LOGGING_ONLY
 
-serviceAccount: 'projects/${_REPO_PROJ}-${_REPO_ENV}/serviceAccounts/corpops-deploy-build@${_REPO_PROJ}-${_REPO_ENV}.iam.gserviceaccount.com'
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/corpops-deploy-build@$PROJECT_ID.iam.gserviceaccount.com'
 
 # NOTE: --allow-unauthenticated makes this mock reachable without an
 # identity token, which is fine for a throwaway dev test double, but
