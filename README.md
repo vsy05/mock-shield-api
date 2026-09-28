@@ -18,6 +18,8 @@ repeatably without hitting the real prod API.
 | GET    | `/api/v0/incidentReporting/incidents`       | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
 | GET    | `/api/v0/riskAssessments/riskAssessment`    | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
 | GET    | `/api/v0/incidentReporting/injuredPerson`   | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
+| GET    | `/api/v0/incidentReporting/actions`         | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
+| GET    | `/api/v0/incidentReporting/investigation`   | Mock JSON:API data endpoint, supports `page[limit]` / `page[offset]` |
 | GET    | `/health`                                   | Health check |
 
 ## Run locally
@@ -55,6 +57,8 @@ output indistinguishable from a real run by name alone:
 - `shield_incidents_get_mocktest.bash`
 - `shield_riskassessment_get_mocktest.bash`
 - `shield_injuredperson_get_mocktest.bash`
+- `shield_actions_get_mocktest.bash`
+- `shield_investigation_get_mocktest.bash`
 
 Once this mock is deployed:
 
@@ -68,6 +72,8 @@ bash shield_identifiedrisk_get_mocktest.bash
 bash shield_incidents_get_mocktest.bash
 bash shield_riskassessment_get_mocktest.bash
 bash shield_injuredperson_get_mocktest.bash
+bash shield_actions_get_mocktest.bash
+bash shield_investigation_get_mocktest.bash
 ```
 
 Since the Cloud Run URL is on `*.run.app`, it should already be reachable
@@ -86,7 +92,13 @@ mock-only), but worth being aware of for cleanup/auditing purposes.
 
 ## Status
 
-All 4 Shield endpoints used by the production pipeline are mocked here:
+The 4 Shield endpoints used by the production pipeline are mocked here:
 `riskAssessments/identifiedRisk`, `incidentReporting/incidents`,
 `riskAssessments/riskAssessment`, and `incidentReporting/injuredPerson`.
+
+Two further endpoints, `incidentReporting/actions` and
+`incidentReporting/investigation`, are also mocked, added ahead of their
+production extraction scripts so those can be built and tested against
+the mock first.
+
 No further endpoints are currently planned.

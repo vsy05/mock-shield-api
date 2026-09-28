@@ -94,9 +94,12 @@ curl -sg -w "\nHTTP Status: %{http_code}\n" \
 # ------------------------------------------------------------------
 
 # ------------------------------------------------------------------
-# Optional: repeat any of the above against the other 3 endpoints by
+# Optional: repeat any of the above against the other 5 endpoints by
 # swapping the path, e.g.:
 #   /api/v0/incidentReporting/incidents
 #   /api/v0/riskAssessments/riskAssessment
 #   /api/v0/incidentReporting/injuredPerson
+#   /api/v0/incidentReporting/actions         (added after the 2026-09-16 run
+#   /api/v0/incidentReporting/investigation    above - not yet confirmed on the
+#                                              deployed mock)
 # ------------------------------------------------------------------

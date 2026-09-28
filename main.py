@@ -19,6 +19,12 @@ Endpoints mocked:
     GET  /api/v0/incidentReporting/injuredPerson
         - JSON:API-shaped response with sample records
         - Supports page[limit] / page[offset] query params
+    GET  /api/v0/incidentReporting/actions
+        - JSON:API-shaped response with sample records
+        - Supports page[limit] / page[offset] query params
+    GET  /api/v0/incidentReporting/investigation
+        - JSON:API-shaped response with sample records
+        - Supports page[limit] / page[offset] query params
     GET  /health
         - Health check
 
@@ -1012,6 +1018,220 @@ INJURED_PERSON_DATA = [
 INJURED_PERSON_TOTAL_COUNT = 2441  # fictional total, deliberately different from any real prod count
 
 
+# ------------------------------------------------------------------
+# Sample data - rebuilt from the REAL field structure of an
+# incidentReporting/actions record (confirmed against an actual prod
+# sample), with entirely fictional values. All names, emails, and
+# reference numbers below are fictional. Field names are preserved
+# exactly, including "doYouRequireToAssignThisActionToANonSky" - that is
+# the real API's own field name, kept as-is so parsing logic is tested
+# faithfully. Record 1 deliberately returns personResponsible as an empty
+# string ("") rather than null, mirroring the real sample, so both
+# "empty" representations are exercised. The actionUpdates relationship
+# is a discussion-forum field and carries its own meta
+# (mostRecentPost / totalCount), like the array-valued relationships on
+# injuredPerson.
+# ------------------------------------------------------------------
+ACTIONS_DATA = [
+    {
+        "id": "40001",
+        "type": "actions",
+        "attributes": {
+            "actionsRefNo": 4401,
+            "dateActionRaised": "2026-02-16T00:00:00",
+            "actionRaisedBy": "Sample Action Owner One",
+            "targetCompletionDate": "2026-02-23T00:00:00",
+            "actioneeEmailAddress": None,
+            "actionRequired": "Sample fictional action: replace worn signage at the test site entrance.",
+            "personResponsible": "",
+            "actionTaken": "Sample fictional update: replacement signage ordered, awaiting delivery.",
+            "actionCompletedBy": None,
+            "dateCompleted": None,
+            "actionStatus": {"text": "Action Overdue", "colour": "#FF2000"},
+            "lastUpdatedOn": "2026-02-16T15:14:10",
+            "updatedBy": "Sample Action Owner One",
+            "overrideTargetCompletionDate": None,
+            "actionClosedStatus": {"text": "Action In Progress", "colour": "#FFA322"}
+        },
+        "relationships": {
+            "actionPriority": {
+                "data": {"type": "luActionPriority", "id": "1", "meta": {"displayValue": "P1"}},
+                "links": {"related": "/api/v0/incidentReporting/luActionPriority/1"}
+            },
+            "doYouRequireToAssignThisActionToANonSky": {
+                "data": {"type": "luYesNo", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/2"}
+            },
+            "actionUpdates": {
+                "data": [],
+                "links": {"related": "/api/v0/incidentReporting/actions/40001/sys_discussionForumPosts/actionUpdates"},
+                "meta": {"mostRecentPost": None, "totalCount": 0}
+            },
+            "evidence": {"data": None},
+            "doYouWantToOverrideTargetCompletionDate": {"data": None},
+            "sys_calculations": {
+                "links": {"related": "/api/v0/incidentReporting/actions/40001/sys_calculations"}
+            }
+        },
+        "links": {"self": "/api/v0/incidentReporting/actions/40001"}
+    },
+    {
+        "id": "40002",
+        "type": "actions",
+        "attributes": {
+            "actionsRefNo": 4402,
+            "dateActionRaised": "2026-03-02T00:00:00",
+            "actionRaisedBy": "Sample Action Owner Two",
+            "targetCompletionDate": "2026-03-16T00:00:00",
+            "actioneeEmailAddress": "sample.actionee.two@example-corp.test",
+            "actionRequired": "Sample fictional action: complete a refresher briefing for the test field team.",
+            "personResponsible": "Sample Actionee Two",
+            "actionTaken": "Sample fictional update: briefing delivered and attendance recorded.",
+            "actionCompletedBy": "Sample Actionee Two",
+            "dateCompleted": "2026-03-13T00:00:00",
+            "actionStatus": {"text": "Action Complete", "colour": "#00FF00"},
+            "lastUpdatedOn": "2026-03-13T09:41:27",
+            "updatedBy": "Sample Actionee Two",
+            "overrideTargetCompletionDate": None,
+            "actionClosedStatus": {"text": "Action Closed", "colour": "#00FF00"}
+        },
+        "relationships": {
+            "actionPriority": {
+                "data": {"type": "luActionPriority", "id": "2", "meta": {"displayValue": "P2"}},
+                "links": {"related": "/api/v0/incidentReporting/luActionPriority/2"}
+            },
+            "doYouRequireToAssignThisActionToANonSky": {
+                "data": {"type": "luYesNo", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/2"}
+            },
+            "actionUpdates": {
+                "data": [],
+                "links": {"related": "/api/v0/incidentReporting/actions/40002/sys_discussionForumPosts/actionUpdates"},
+                "meta": {"mostRecentPost": None, "totalCount": 0}
+            },
+            "evidence": {"data": None},
+            "doYouWantToOverrideTargetCompletionDate": {"data": None},
+            "sys_calculations": {
+                "links": {"related": "/api/v0/incidentReporting/actions/40002/sys_calculations"}
+            }
+        },
+        "links": {"self": "/api/v0/incidentReporting/actions/40002"}
+    },
+]
+
+ACTIONS_TOTAL_COUNT = 3187  # fictional total, deliberately different from any real prod count
+
+
+# ------------------------------------------------------------------
+# Sample data - rebuilt from the REAL field structure of an
+# incidentReporting/investigation record (confirmed against an actual
+# prod sample), with entirely fictional values. Note the table id is
+# singular ("investigation"), unlike most other endpoints. All names,
+# timelines, and file names below are fictional placeholders. Field names
+# are preserved exactly. The long free-text fields deliberately contain
+# embedded newlines (\n) and a non-ASCII character (curly quotes), as the
+# real sample does, so NDJSON one-record-per-line handling and the UTF-8
+# check are exercised by realistic content. incidentsRefNo links to the
+# mock incidents above (50001 / 50002) so the two feeds stay
+# cross-referentially consistent. Record 2 is an in-progress
+# investigation (nulls in the completion/narrative fields, no attached
+# document) to give a second, structurally different shape.
+# ------------------------------------------------------------------
+INVESTIGATION_DATA = [
+    {
+        "id": "30001",
+        "type": "investigation",
+        "attributes": {
+            "investigationRefNo": 2201,
+            "detailsOfTheIncidentScene": "Sample fictional timeline for pipeline testing:\n0900: Test alarm triggered in the sample equipment room.\n0902: Duty officer, Sample Officer One, attended and found no visible hazard.\n0910: Sample Contractor One was informed and asked to inspect the unit.\n0930: Inspection completed; no further action needed on the day.\n1000: Area declared safe and normal operations resumed.",
+            "conditionsAtTimeOfIncident": "The sample engineer traced the fault to \u201cTest Unit 2\u201d.\nA sample component had failed.\nThere are multiple fictional reasons this can happen,\nComponent wear\nSpike in test supply",
+            "whatHappenedAtTheTimeOfTheIncident": "A fictional supplier will send a quote to have this sample unit repaired.\nRepair work is planned for a quiet period.\nAll sample stakeholders will be kept informed.",
+            "dateInvestigationComplete": "2026-03-12T00:00:00",
+            "investigatorsName": "Sample Investigator One",
+            "investigationStatus": {"text": "Complete", "colour": "#00FF00"},
+            "lastUpdatedOn": "2026-03-12T08:15:49",
+            "lastUpdatedBy": "Sample Investigator One",
+            "actionsRequired": None
+        },
+        "relationships": {
+            "incidentsRefNo": {
+                "data": {"type": "incidents", "id": "50001", "meta": {"displayValue": 1}},
+                "links": {"related": "/api/v0/incidentReporting/incidents/50001"}
+            },
+            "isARiskAssessmentInPlace": {
+                "data": {"type": "luYesNoUnknown", "id": "1", "meta": {"displayValue": "Yes"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNoUnknown/1"}
+            },
+            "areAnyActionsRequiredAsAResult": {
+                "data": {"type": "luYesNo", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/2"}
+            },
+            "documentImageUpload": {
+                "data": {
+                    "type": "sys_documents",
+                    "id": "bW9jay1kb2MtaWQtMDAwMQ==",
+                    "meta": {"name": "Sample_Investigation_Attachment_1.msg", "contentType": "application/octet-stream"}
+                },
+                "links": {"related": "/api/v0/incidentReporting/investigation/30001/sys_documents/documentImageUpload"}
+            },
+            "investigationComplete": {
+                "data": {"type": "luYesNo", "id": "1", "meta": {"displayValue": "Yes"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/1"}
+            },
+            "liabilityAccepted": {"data": None},
+            "followUpMeetingWithEngineer": {"data": None},
+            "sys_calculations": {
+                "links": {"related": "/api/v0/incidentReporting/investigation/30001/sys_calculations"}
+            }
+        },
+        "links": {"self": "/api/v0/incidentReporting/investigation/30001"}
+    },
+    {
+        "id": "30002",
+        "type": "investigation",
+        "attributes": {
+            "investigationRefNo": 2202,
+            "detailsOfTheIncidentScene": "Sample fictional timeline for pipeline testing:\n1400: Test report received by the sample safety team.\n1415: Sample Investigator Two began gathering statements.\n1600: Initial review paused pending further sample information.",
+            "conditionsAtTimeOfIncident": None,
+            "whatHappenedAtTheTimeOfTheIncident": None,
+            "dateInvestigationComplete": None,
+            "investigatorsName": "Sample Investigator Two",
+            "investigationStatus": {"text": "In Progress", "colour": "#FFA500"},
+            "lastUpdatedOn": "2026-04-08T13:40:12",
+            "lastUpdatedBy": "Sample Investigator Two",
+            "actionsRequired": None
+        },
+        "relationships": {
+            "incidentsRefNo": {
+                "data": {"type": "incidents", "id": "50002", "meta": {"displayValue": 2}},
+                "links": {"related": "/api/v0/incidentReporting/incidents/50002"}
+            },
+            "isARiskAssessmentInPlace": {
+                "data": {"type": "luYesNoUnknown", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNoUnknown/2"}
+            },
+            "areAnyActionsRequiredAsAResult": {
+                "data": {"type": "luYesNo", "id": "1", "meta": {"displayValue": "Yes"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/1"}
+            },
+            "documentImageUpload": {"data": None},
+            "investigationComplete": {
+                "data": {"type": "luYesNo", "id": "2", "meta": {"displayValue": "No"}},
+                "links": {"related": "/api/v0/incidentReporting/luYesNo/2"}
+            },
+            "liabilityAccepted": {"data": None},
+            "followUpMeetingWithEngineer": {"data": None},
+            "sys_calculations": {
+                "links": {"related": "/api/v0/incidentReporting/investigation/30002/sys_calculations"}
+            }
+        },
+        "links": {"self": "/api/v0/incidentReporting/investigation/30002"}
+    },
+]
+
+INVESTIGATION_TOTAL_COUNT = 954  # fictional total, deliberately different from any real prod count
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
@@ -1376,6 +1596,152 @@ def get_injured_person():
     return build_and_validate_response(response_body, records)
 
 
+@app.route('/api/v0/incidentReporting/actions', methods=['GET'])
+def get_actions():
+    """
+    Mock endpoint mimicking InfoExchange (Shield) JSON:API dynamic endpoint
+    for the incidentReporting/actions table.
+
+    Query parameters supported:
+        page[limit]  - max records to return (default 3, capped at sample size)
+        page[offset] - offset into the sample set (wraps if beyond sample size)
+    """
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({
+            "errors": [{"detail": "Missing or invalid Authorization header"}]
+        }), 401, get_standard_headers()
+
+    try:
+        limit = int(request.args.get('page[limit]', 3))
+    except (TypeError, ValueError):
+        limit = 3
+
+    try:
+        offset = int(request.args.get('page[offset]', 0))
+    except (TypeError, ValueError):
+        offset = 0
+
+    start = offset % len(ACTIONS_DATA)
+    records = (ACTIONS_DATA * 2)[start:start + limit]
+
+    # Unconditional row_size check against the ACTUAL records about to be
+    # returned - not a simulated/inflated copy. This means if a tester
+    # manually bloats a sample record's real content in this file (e.g.
+    # pads a text field past the 2MB limit), a plain GET call with no
+    # ?validate=true param will naturally return 422 here. Any of the
+    # standard mocktest scripts calling this endpoint will then fail via
+    # their own existing `if [ "${http_code}" != "200" ]` check - no
+    # separate validation call, endpoint, or script change is needed to
+    # catch this; inflating the data is enough to make the corresponding
+    # mocktest script fail on its own.
+    if 'row_size' in ENABLED_CHECKS:
+        try:
+            check_row_size(convert_to_ndjson(records), MAX_ROW_SIZE_MB)
+        except ValidationError as e:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": str(e),
+            }), 422, get_standard_headers()
+
+    if request.args.get('validate', '').lower() == 'true':
+        simulate = request.args.get('simulate')
+        is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
+        if not is_valid:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": error_message,
+                "simulated_failure": simulate,
+            }), 422, get_standard_headers()
+
+    next_offset = offset + limit
+    last_offset = ACTIONS_TOTAL_COUNT - limit
+
+    response_body = {
+        "data": records,
+        "meta": {"totalCount": ACTIONS_TOTAL_COUNT},
+        "links": {
+            "next": f"/api/v0/incidentReporting/actions?page%5Blimit%5D={limit}&page%5Boffset%5D={next_offset}",
+            "last": f"/api/v0/incidentReporting/actions?page%5Blimit%5D={limit}&page%5Boffset%5D={last_offset}",
+        },
+    }
+
+    return build_and_validate_response(response_body, records)
+
+
+@app.route('/api/v0/incidentReporting/investigation', methods=['GET'])
+def get_investigation():
+    """
+    Mock endpoint mimicking InfoExchange (Shield) JSON:API dynamic endpoint
+    for the incidentReporting/investigation table.
+
+    Query parameters supported:
+        page[limit]  - max records to return (default 3, capped at sample size)
+        page[offset] - offset into the sample set (wraps if beyond sample size)
+    """
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({
+            "errors": [{"detail": "Missing or invalid Authorization header"}]
+        }), 401, get_standard_headers()
+
+    try:
+        limit = int(request.args.get('page[limit]', 3))
+    except (TypeError, ValueError):
+        limit = 3
+
+    try:
+        offset = int(request.args.get('page[offset]', 0))
+    except (TypeError, ValueError):
+        offset = 0
+
+    start = offset % len(INVESTIGATION_DATA)
+    records = (INVESTIGATION_DATA * 2)[start:start + limit]
+
+    # Unconditional row_size check against the ACTUAL records about to be
+    # returned - not a simulated/inflated copy. This means if a tester
+    # manually bloats a sample record's real content in this file (e.g.
+    # pads a text field past the 2MB limit), a plain GET call with no
+    # ?validate=true param will naturally return 422 here. Any of the
+    # standard mocktest scripts calling this endpoint will then fail via
+    # their own existing `if [ "${http_code}" != "200" ]` check - no
+    # separate validation call, endpoint, or script change is needed to
+    # catch this; inflating the data is enough to make the corresponding
+    # mocktest script fail on its own.
+    if 'row_size' in ENABLED_CHECKS:
+        try:
+            check_row_size(convert_to_ndjson(records), MAX_ROW_SIZE_MB)
+        except ValidationError as e:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": str(e),
+            }), 422, get_standard_headers()
+
+    if request.args.get('validate', '').lower() == 'true':
+        simulate = request.args.get('simulate')
+        is_valid, error_message, _ = run_self_validation(records, simulate, EXPECTED_CONTENT_TYPE)
+        if not is_valid:
+            return jsonify({
+                "validation_result": "FAILED",
+                "error": error_message,
+                "simulated_failure": simulate,
+            }), 422, get_standard_headers()
+
+    next_offset = offset + limit
+    last_offset = INVESTIGATION_TOTAL_COUNT - limit
+
+    response_body = {
+        "data": records,
+        "meta": {"totalCount": INVESTIGATION_TOTAL_COUNT},
+        "links": {
+            "next": f"/api/v0/incidentReporting/investigation?page%5Blimit%5D={limit}&page%5Boffset%5D={next_offset}",
+            "last": f"/api/v0/incidentReporting/investigation?page%5Blimit%5D={limit}&page%5Boffset%5D={last_offset}",
+        },
+    }
+
+    return build_and_validate_response(response_body, records)
+
+
 # ==============================================================================
 # Test-data landing helper
 #
@@ -1415,6 +1781,16 @@ FEED_CONFIG = {
         "data_fn": lambda: INJURED_PERSON_DATA,
         "gcs_folder": "injuredperson_list_all",
         "filename_prefix": "SHIELD_INJUREDPERSON_LIST_ALL",
+    },
+    "actions": {
+        "data_fn": lambda: ACTIONS_DATA,
+        "gcs_folder": "actions_list_all",
+        "filename_prefix": "SHIELD_ACTIONS_LIST_ALL",
+    },
+    "investigation": {
+        "data_fn": lambda: INVESTIGATION_DATA,
+        "gcs_folder": "investigation_list_all",
+        "filename_prefix": "SHIELD_INVESTIGATION_LIST_ALL",
     },
 }
 
@@ -1476,7 +1852,7 @@ def mock_land_test_file():
     convention the real pipeline uses.
 
     Body: {"feed": "identifiedrisk", "bucket_env": "dev"}
-    feed one of: identifiedrisk | incidents | riskassessment | injuredperson
+    feed one of: identifiedrisk | incidents | riskassessment | injuredperson | actions | investigation
     """
     data = request.get_json(silent=True) or {}
     feed_key = data.get("feed")
