@@ -20,6 +20,7 @@ steps:
         --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/mock-shield-api:${_TAG}
         --region ${_REGION} --service-account ${_SA_ACCOUNT}
         --revision-suffix $(cat uid.txt)
+        --vpc-connector=${_VPC_CONNECTOR} --ingress internal
         --memory ${_SERV_MEM} --cpu ${_SERV_CPU} --timeout=${_SERV_TIMEOUT}
         --allow-unauthenticated
         --set-env-vars=PROJ_ID=${PROJECT_ID}
@@ -34,6 +35,7 @@ substitutions:
   _SERV_MEM: 512Mi
   _SERV_CPU: "1"
   _SERV_TIMEOUT: 60s
+  _VPC_CONNECTOR: "projects/skyuk-uk-shared-vpc-${_REPO_ENV}/locations/${_REGION}/connectors/vpc-connector-run-${_REPO_ENV}"
 
 options:
   dynamicSubstitutions: true
